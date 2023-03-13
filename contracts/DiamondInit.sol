@@ -9,6 +9,15 @@ pragma solidity ^0.8.0;
  * ERC721A-DIAMOND-TEMPLATE by Sibling Labs
 /**************************************************************/
 
+// INFO STILL NEEDED:
+// - Client admin addresses
+// - Merkle Root (calc'd from whitelist addresses)
+// - Base URI
+// - Fund recipient addresses & rev splits
+// - Royalty recipient & fee percentage
+// - Date and time of sale (as epoch timestamp)
+// - Exact length of sale
+
 import { GlobalState } from "./libraries/GlobalState.sol";
 import { AllowlistLib } from "./facets/AllowlistFacet.sol";
 import { TokenFacetLib } from "./facets/TokenFacet.sol";
@@ -39,7 +48,7 @@ contract DiamondInit {
         // therefore will not be accessible by the
         // delegatecall from the diamond contract.
         address[] memory admins = new address[](1);
-        admins[0] = 0x885Af893004B4405Dc18af1A4147DCDCBdA62b50;
+        admins[0] = 0x885Af893004B4405Dc18af1A4147DCDCBdA62b50; //tbd
 
         for (uint256 i; i < admins.length; i++) {
             GlobalState.getState().admins[admins[i]] = true;
@@ -56,11 +65,10 @@ contract DiamondInit {
 
     // TokenFacet //
 
-    uint256 private constant maxSupply = 10000;
-    string private constant baseURI = "https://ipfs.io/ipfs/.../?";
+    string private constant baseURI = "https://ipfs.io/ipfs/.../?"; // tbd
 
-    string private constant name = "MyToken";
-    string private constant symbol = "MTK";
+    string private constant name = "MomentsAsia365";
+    string private constant symbol = "MA365";
     uint256 private constant startTokenId = 0;
 
     function initTokenFacet() public {
@@ -68,18 +76,13 @@ contract DiamondInit {
         // function, as arrays cannot be constant and therefore
         // will not be accessible by the delegatecall from the
         // diamond contract.
-        uint256[] memory walletCaps = new uint256[](2);
-        walletCaps[0] = 5;
-        walletCaps[1] = 20;
 
         uint256[] memory prices = new uint256[](2);
-        prices[0] = 0.01 ether;
-        prices[1] = 0.01 ether;
+        prices[0] = 0.0365 ether; // public
+        prices[1] = 0.03 ether; // allowlist
 
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
-        s1.maxSupply = maxSupply;
-        s1.walletCap = walletCaps;
         s1.price = prices;
         s1.baseURI = baseURI;
 
@@ -123,7 +126,7 @@ contract DiamondInit {
         // will not be accessible by the delegatecall from the
         // diamond contract.
         address[] memory payees = new address[](1);
-        payees[0] = 0x699a1928EA12D21dd2138F36A3690059bf1253A0;
+        payees[0] = 0x699a1928EA12D21dd2138F36A3690059bf1253A0; //tbd
 
         uint256[] memory shares = new uint256[](1);
         shares[0] = 1;
@@ -138,22 +141,20 @@ contract DiamondInit {
 
     // SaleHandlerFacet //
 
-    uint256 private constant privSaleTimestamp = 1663286400;
-    uint256 private constant privSaleLength = 86400;
-    uint256 private constant publicSaleLength = 86400;
+    uint256 private constant privSaleTimestamp = 1663286400; //tbd
+    uint256 private constant publicSaleLength = 86400; //tbd
 
     function initSaleHandlerFacet() public {
         SaleHandlerLib.state storage s = SaleHandlerLib.getState();
 
         s.saleTimestamp = privSaleTimestamp;
-        s.privSaleLength = privSaleLength;
         s.publicSaleLength = publicSaleLength;
     }
 
     // RoyaltiesConfigFacet //
 
-    address payable private constant royaltyRecipient = payable(0x699a1928EA12D21dd2138F36A3690059bf1253A0);
-    uint256 private constant royaltyBps = 1000;
+    address payable private constant royaltyRecipient = payable(0x699a1928EA12D21dd2138F36A3690059bf1253A0); //tbd
+    uint256 private constant royaltyBps = 1000; //tbd
 
     function initRoyaltiesConfigFacet() public {
         RoyaltiesConfigLib.state storage s = RoyaltiesConfigLib.getState();
