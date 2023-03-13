@@ -123,7 +123,8 @@ contract TokenFacet is ERC721AUpgradeable {
 
         uint256 _walletCap = al ? s.walletCap[0] : s.walletCap[1];
         require(
-            amount + _numberMinted(msg.sender) <= _walletCap,
+            amount + _numberMinted(msg.sender) <= _walletCap || 
+            _walletCap == 0,
             string(
                 abi.encodePacked(
                     "TokenFacet: maximum tokens per wallet during ",
@@ -152,8 +153,10 @@ contract TokenFacet is ERC721AUpgradeable {
 
     function _safeMint(address to, uint256 amount) internal override {
         uint256 totalMinted = _totalMinted();
+        uint256 _maxSupply = TokenFacetLib.getState().maxSupply;
         require(
-            totalMinted + amount <= TokenFacetLib.getState().maxSupply,
+            totalMinted + amount <= _maxSupply ||
+            _maxSupply == 0,
             "TokenFacet: too few tokens remaining"
         );
 
