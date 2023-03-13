@@ -78,8 +78,8 @@ contract DiamondInit {
         // diamond contract.
 
         uint256[] memory prices = new uint256[](2);
-        prices[0] = 0.0365 ether; // public
-        prices[1] = 0.03 ether; // allowlist
+        prices[0] = 0.03 ether; // allowlist
+        prices[1] = 0.0365 ether; // public
 
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
