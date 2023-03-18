@@ -17,6 +17,8 @@ pragma solidity ^0.8.0;
 // - Royalty recipient & fee percentage
 // - Date and time of sale (as epoch timestamp)
 // - Exact length of sale
+//
+// do we need a `recover` function?
 
 import { GlobalState } from "./libraries/GlobalState.sol";
 import { AllowlistLib } from "./facets/AllowlistFacet.sol";
@@ -57,7 +59,7 @@ contract DiamondInit {
 
     // AllowlistFacet //
 
-    bytes32 private constant merkleRoot = 0x3d7ea9207f8fd37c25e5eebfea71390f9fefee8c47f9b9a5c390cdee08df7ba2;
+    bytes32 private constant merkleRoot = 0x3d7ea9207f8fd37c25e5eebfea71390f9fefee8c47f9b9a5c390cdee08df7ba2; //tbd
 
     function initAllowlistFacet() public {
         AllowlistLib.getState().merkleRoot = merkleRoot;
@@ -65,7 +67,7 @@ contract DiamondInit {
 
     // TokenFacet //
 
-    string private constant baseURI = "https://ipfs.io/ipfs/.../?"; // tbd
+    string private constant baseURI = "https://gateway.pinata.cloud/ipfs/.../?"; // tbd
 
     string private constant name = "MomentsAsia365";
     string private constant symbol = "MA365";
@@ -81,10 +83,15 @@ contract DiamondInit {
         prices[0] = 0.03 ether; // allowlist
         prices[1] = 0.0365 ether; // public
 
+        uint256[] memory walletCap = new uint256[](2);
+        walletCap[0] = 0;
+        walletCap[1] = 0;
+
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
         s1.price = prices;
         s1.baseURI = baseURI;
+        s1.walletCap = walletCap;
 
         ERC721AStorage.Layout storage s2 = ERC721AStorage.layout();
 

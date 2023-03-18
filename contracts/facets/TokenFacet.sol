@@ -99,9 +99,19 @@ contract TokenFacet is ERC721AUpgradeable {
         TokenFacetLib.getState().baseURI = URI;
     }
 
-    function reserve(uint256 amount) external {
+    function setName(string memory name) external {
         GlobalState.requireCallerIsAdmin();
-        _safeMint(msg.sender, amount);
+        ERC721AStorage.layout()._name = name;
+    }
+
+    function setSymbol(string memory symbol) external {
+        GlobalState.requireCallerIsAdmin();
+        ERC721AStorage.layout()._symbol = symbol;
+    }
+
+    function reserve(uint256 amount, address recipient) external {
+        GlobalState.requireCallerIsAdmin();
+        _safeMint(recipient, amount);
     }
 
     // PUBLIC FUNCTIONS //
@@ -113,7 +123,10 @@ contract TokenFacet is ERC721AUpgradeable {
         if (al)  {
             AllowlistLib.requireValidProof(_merkleProof);
         } else {
-            require(SaleHandlerLib.isPublicSaleActive(), "TokenFacet: token sale is not available now");
+            require(
+                SaleHandlerLib.isPublicSaleActive(),
+                "TokenFacet: token sale is not available now"
+            );
         }
 
         TokenFacetLib.state storage s = TokenFacetLib.getState();

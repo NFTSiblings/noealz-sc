@@ -35,7 +35,7 @@ describe("Initialisation", () => {
         for (address of await DiamondLoupeFacet.facetAddresses()) {
             facetAddresses.push(address)
         }
-        assert.equal(facetAddresses.length, 11)
+        assert.equal(facetAddresses.length, 10)
     })
 
     it("AdminPrivilegesFacet is initialised correctly", async () => {
@@ -49,16 +49,16 @@ describe("Initialisation", () => {
     })
 
     it("TokenFacet is initialised correctly", async () => {
-        maxSupply = 10000
+        maxSupply = 0
         baseURI = "https://gateway.pinata.cloud/ipfs/.../?"
-        walletCaps = [5, 20]
-        prices = [ethers.utils.parseEther("0.01"), ethers.utils.parseEther("0.01")]
-        contractName = "MyToken"
-        contractSymbol = "MTK"
+        walletCaps = [0, 0]
+        prices = [ethers.utils.parseEther("0.03"), ethers.utils.parseEther("0.0365")]
+        contractName = "MomentsAsia365"
+        contractSymbol = "MA365"
         startTokenId = 0
 
         expect(await TokenFacet.maxSupply()).to.equal(maxSupply)
-        await TokenFacet.reserve(1)
+        await TokenFacet.reserve(1, deployer.address)
         expect(await TokenFacet.exists(0)).to.equal(true)
         expect(await TokenFacet.tokenURI(0)).to.equal(baseURI + "0")
         expect(await TokenFacet.walletCap()).to.equal(walletCaps[1])
@@ -87,7 +87,7 @@ describe("Initialisation", () => {
 
     it("SaleHandlerFacet is initialised correctly", async () => {
         privSaleTimestamp = 1663286400
-        privSaleLength = 86400
+        privSaleLength = 0
         publicSaleLength = 86400
 
         expect(await SaleHandlerFacet.saleTimestamp()).to.equal(privSaleTimestamp)
