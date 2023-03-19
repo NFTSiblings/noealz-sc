@@ -16,7 +16,9 @@ library TokenFacetLib {
     bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("tokenfacet.storage");
 
     struct state {
+        uint256 globalRandom;
         uint256 maxSupply;
+        uint256[] breakPoints;
         uint256[] walletCap;
         uint256[] price;
         string baseURI;
@@ -31,6 +33,16 @@ library TokenFacetLib {
         assembly {
             _state.slot := position
         }
+    }
+
+    function random(uint256 randomizer, uint256 max) internal view returns (uint256) {
+        return uint256(
+            keccak256(
+                abi.encodePacked(
+                    getState().globalRandom, randomizer, max
+                )
+            )
+        ) % max;
     }
 }
 
@@ -49,10 +61,15 @@ import { AllowlistLib } from "./AllowlistFacet.sol";
 import 'erc721a-upgradeable/contracts/ERC721AUpgradeable.sol';
 
 contract TokenFacet is ERC721AUpgradeable {
+
     // VARIABLE GETTERS //
 
     function maxSupply() external view returns (uint256) {
         return TokenFacetLib.getState().maxSupply;
+    }
+    
+    function getBreakPoints() external view returns (uint256[] memory) {
+        return TokenFacetLib.getState().breakPoints;
     }
 
     function walletCapAL() external view returns (uint256) {
@@ -81,6 +98,12 @@ contract TokenFacet is ERC721AUpgradeable {
         GlobalState.requireCallerIsAdmin();
         TokenFacetLib.getState().price[0] = _priceAL;
         TokenFacetLib.getState().price[1] = _price;
+    }
+
+    function setBreakPoints(uint256[] memory breakPoints) external {
+        GlobalState.requireCallerIsAdmin();
+        require(breakPoints.length == 3, "Improper Input");
+        TokenFacetLib.getState().breakPoints = breakPoints;
     }
 
     function setWalletCaps(uint256 _walletCap, uint256 _walletCapAL) external {
@@ -159,6 +182,43 @@ contract TokenFacet is ERC721AUpgradeable {
     }
 
     // METADATA & MISC FUNCTIONS //
+
+    function tokenURI(uint256 tokenId) public override view returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+        uint256 saleTimestamp = SaleHandlerLib.getState().saleTimestamp;
+        
+        if(block.timestamp >= saleTimestamp) {
+            uint256 DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
+            uint256[] memory breakPoints = TokenFacetLib.getState().breakPoints;
+            uint256 DEFAULT_AFTER_ONE_YEAR = breakPoints[2];
+
+            if(DAY_NUMBER > breakPoints[0] && DAY_NUMBER < breakPoints[1]) {
+                return string(abi.encodePacked(_baseURI(), _toString(DAY_NUMBER)));
+            }
+            else if(DAY_NUMBER >= breakPoints[1] && DAY_NUMBER < breakPoints[2]) {
+                uint256 length = breakPoints[2] - breakPoints[1];
+                uint256[] memory array = new uint256[](length);
+
+                for(uint256 i; i < length; i++) {
+                    array[i] = i + breakPoints[1];
+                }
+
+                for(uint256 i = length - 1; i > 0; i--) {
+                    uint256 j = TokenFacetLib.random((tokenId), i + 1);
+                    (array[i], array[j]) = (array[j], array[i]);
+                }
+
+                uint256 currentDayURI = array[DAY_NUMBER - breakPoints[1]];
+                return string(abi.encodePacked(_baseURI(),  _toString(currentDayURI)));
+            }
+            else if (DAY_NUMBER >= breakPoints[2]) {
+                return string(abi.encodePacked(_baseURI(),  _toString(DEFAULT_AFTER_ONE_YEAR)));
+            }
+        } 
+        else {
+            return string(abi.encodePacked(_baseURI(), _toString(0)));
+        }   
+    }
 
     function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);

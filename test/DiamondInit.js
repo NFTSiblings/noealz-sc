@@ -51,6 +51,7 @@ describe("Initialisation", () => {
     it("TokenFacet is initialised correctly", async () => {
         maxSupply = 0
         baseURI = "https://gateway.pinata.cloud/ipfs/.../?"
+        breakPoints = [0, 11, 366]
         walletCaps = [0, 0]
         prices = [ethers.utils.parseEther("0.03"), ethers.utils.parseEther("0.0365")]
         contractName = "MomentsAsia365"
@@ -61,6 +62,7 @@ describe("Initialisation", () => {
         await TokenFacet.reserve(1, deployer.address)
         expect(await TokenFacet.exists(0)).to.equal(true)
         expect(await TokenFacet.tokenURI(0)).to.equal(baseURI + "0")
+        expect(await TokenFacet.getBreakPoints()).to.deep.equal(breakPoints)
         expect(await TokenFacet.walletCap()).to.equal(walletCaps[1])
         expect(await TokenFacet.walletCapAL()).to.equal(walletCaps[0])
         expect(await TokenFacet.price()).to.equal(prices[1])
@@ -86,7 +88,7 @@ describe("Initialisation", () => {
     })
 
     it("SaleHandlerFacet is initialised correctly", async () => {
-        privSaleTimestamp = 1663286400
+        privSaleTimestamp = 1679255526
         privSaleLength = 0
         publicSaleLength = 86400
 

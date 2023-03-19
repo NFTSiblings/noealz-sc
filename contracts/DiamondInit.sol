@@ -87,8 +87,19 @@ contract DiamondInit {
         walletCap[0] = 0;
         walletCap[1] = 0;
 
+        uint256[] memory breakPoints = new uint256[](3);
+        breakPoints[0] = 0;
+        breakPoints[1] = 11;
+        breakPoints[2] = 366;
+
+        uint256 globalRandom = uint256(keccak256(abi.encodePacked(
+            block.number, block.timestamp, block.difficulty, block.gaslimit, msg.sender, gasleft(), msg.data, tx.gasprice
+        )));
+
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
+        s1.globalRandom = globalRandom;
+        s1.breakPoints = breakPoints;
         s1.price = prices;
         s1.baseURI = baseURI;
         s1.walletCap = walletCap;
@@ -148,7 +159,7 @@ contract DiamondInit {
 
     // SaleHandlerFacet //
 
-    uint256 private constant privSaleTimestamp = 1663286400; //tbd
+    uint256 private constant privSaleTimestamp = 1679255526; //tbd
     uint256 private constant publicSaleLength = 86400; //tbd
 
     function initSaleHandlerFacet() public {
