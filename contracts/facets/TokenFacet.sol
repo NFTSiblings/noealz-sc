@@ -18,6 +18,10 @@ library TokenFacetLib {
     string internal constant DAY_TAG = '<DAY>';
     string internal constant CITY_TAG = '<CITY>';
 
+    enum PriceType { Allowlist, Public }
+    enum WalletCapType { Allowlist, Public }
+
+
     struct state {
         uint256 globalRandom;
         uint256 maxSupply;
@@ -110,19 +114,19 @@ contract TokenFacet is ERC721AUpgradeable {
     }
 
     function walletCapAL() external view returns (uint256) {
-        return TokenFacetLib.getState().walletCap[0];
+        return TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)];
     }
 
     function walletCap() external view returns (uint256) {
-        return TokenFacetLib.getState().walletCap[1];
+        return TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Public)];
     }
 
     function priceAL() external view returns (uint256) {
-        return TokenFacetLib.getState().price[0];
+        return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)];
     }
 
     function price() external view returns (uint256) {
-        return TokenFacetLib.getState().price[1];
+        return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)];
     }
 
     function burnStatus() external view returns (bool) {
@@ -133,8 +137,8 @@ contract TokenFacet is ERC721AUpgradeable {
 
     function setPrices(uint256 _price, uint256 _priceAL) external {
         GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().price[0] = _priceAL;
-        TokenFacetLib.getState().price[1] = _price;
+        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)] = _priceAL;
+        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)] = _price;
     }
 
     function setBreakPoints(uint256[] memory breakPoints) external {
@@ -145,8 +149,8 @@ contract TokenFacet is ERC721AUpgradeable {
 
     function setWalletCaps(uint256 _walletCap, uint256 _walletCapAL) external {
         GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().walletCap[0] = _walletCapAL;
-        TokenFacetLib.getState().walletCap[1] = _walletCap;
+        TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)] = _walletCapAL;
+        TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Public)] = _walletCap;
     }
 
     function toggleBurnStatus() external {
@@ -207,10 +211,10 @@ contract TokenFacet is ERC721AUpgradeable {
 
         TokenFacetLib.state storage s = TokenFacetLib.getState();
 
-        uint256 _price = al ? s.price[0] : s.price[1];
+        uint256 _price = al ? s.price[uint256(TokenFacetLib.PriceType.Allowlist)] : s.price[uint256(TokenFacetLib.PriceType.Public)];
         require(msg.value == _price * amount, "TokenFacet: incorrect amount of ether sent");
 
-        uint256 _walletCap = al ? s.walletCap[0] : s.walletCap[1];
+        uint256 _walletCap = al ? s.walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)] : s.walletCap[uint256(TokenFacetLib.WalletCapType.Public)];
         require(
             amount + _numberMinted(msg.sender) <= _walletCap || 
             _walletCap == 0,
