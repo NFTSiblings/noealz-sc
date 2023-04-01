@@ -15,14 +15,20 @@ import "erc721a-upgradeable/contracts/ERC721AStorage.sol";
 library TokenFacetLib {
     bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("tokenfacet.storage");
 
+    string internal constant DAY_TAG = '<DAY>';
+    string internal constant CITY_TAG = '<CITY>';
+
     struct state {
         uint256 globalRandom;
         uint256 maxSupply;
         uint256[] breakPoints;
         uint256[] walletCap;
         uint256[] price;
-        string baseURI;
+        string[] image;
         bool burnStatus;
+
+        mapping (uint256 => string) dayToCity;
+        mapping(uint256 => uint256) frozen;
     }
 
     /**
@@ -43,6 +49,28 @@ library TokenFacetLib {
                 )
             )
         ) % max;
+    }
+
+    function getCity(uint256 day) internal view returns (string memory) {
+        return getState().dayToCity[day];
+    }
+
+    function checkTag(string memory a, string memory b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b)));
+    }
+
+    function initImage() internal {
+        string[] storage s = TokenFacetLib.getState().image;
+
+        s.push('data:application/json;utf8,{"name":"Moments #');
+        s.push(DAY_TAG);
+        s.push('","created_by":"Noelz","description":"Different Photos everyday","image":"https://newuri/');
+        s.push(DAY_TAG);
+        s.push('","image_url":"https://newuri/');
+        s.push(DAY_TAG);
+        s.push('","image_details":{"width":2160,"height":2160,"format":"PNG"},"attributes": [{"trait_type":"City","value":"');
+        s.push(CITY_TAG);
+        s.push('"}]}');
     }
 }
 
@@ -68,8 +96,17 @@ contract TokenFacet is ERC721AUpgradeable {
         return TokenFacetLib.getState().maxSupply;
     }
     
+    // Next three functions are for testing, not sure if they are required in production
     function getBreakPoints() external view returns (uint256[] memory) {
         return TokenFacetLib.getState().breakPoints;
+    }
+
+    function getImage() external view returns (string[] memory) {
+        return TokenFacetLib.getState().image;
+    }
+
+    function getDayToCity(uint256 day) external view returns (string memory) {
+        return TokenFacetLib.getState().dayToCity[day];
     }
 
     function walletCapAL() external view returns (uint256) {
@@ -117,11 +154,6 @@ contract TokenFacet is ERC721AUpgradeable {
         TokenFacetLib.getState().burnStatus = !TokenFacetLib.getState().burnStatus;
     }
 
-    function setBaseURI(string memory URI) external {
-        GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().baseURI = URI;
-    }
-
     function setName(string memory name) external {
         GlobalState.requireCallerIsAdmin();
         ERC721AStorage.layout()._name = name;
@@ -130,6 +162,27 @@ contract TokenFacet is ERC721AUpgradeable {
     function setSymbol(string memory symbol) external {
         GlobalState.requireCallerIsAdmin();
         ERC721AStorage.layout()._symbol = symbol;
+    }
+
+    function setImage(string[] memory image) external {
+        GlobalState.requireCallerIsAdmin();
+        TokenFacetLib.getState().image = image;
+    }
+
+    function setDayToCity(uint256[] memory day, string[] memory city) external {
+        GlobalState.requireCallerIsAdmin();
+        require(day.length == city.length, "improper input");
+
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        uint256 length = day.length;
+
+        for(uint256 i; i < length;){
+            s.dayToCity[day[i]] = city[i];
+
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function reserve(uint256 amount, address recipient) external {
@@ -181,43 +234,58 @@ contract TokenFacet is ERC721AUpgradeable {
         _burn(tokenId, true);
     }
 
+    function freeze(uint256 tokenId) external {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+
+        require(s.frozen[tokenId] == 0, "URI already frozen for tokenId");
+        require(ownerOf(tokenId) == msg.sender, "Only owners can freeze URI");
+
+        uint256 saleTimestamp = SaleHandlerLib.getState().saleTimestamp;
+        uint256 DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
+        
+        s.frozen[tokenId] = DAY_NUMBER;
+    }
+
     // METADATA & MISC FUNCTIONS //
 
     function tokenURI(uint256 tokenId) public override view returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
         uint256 saleTimestamp = SaleHandlerLib.getState().saleTimestamp;
+        uint256 frozen = uint256(TokenFacetLib.getState().frozen[uint256(tokenId)]);
         
         if(block.timestamp >= saleTimestamp) {
-            uint256 DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
-            uint256[] memory breakPoints = TokenFacetLib.getState().breakPoints;
-            uint256 DEFAULT_AFTER_ONE_YEAR = breakPoints[2];
+                uint256 DAY_NUMBER;
+                if(frozen != 0) DAY_NUMBER = frozen;
+                else DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
+                uint256[] memory breakPoints = TokenFacetLib.getState().breakPoints;
+                uint256 DEFAULT_AFTER_ONE_YEAR = breakPoints[2];
 
-            if(DAY_NUMBER > breakPoints[0] && DAY_NUMBER < breakPoints[1]) {
-                return string(abi.encodePacked(_baseURI(), _toString(DAY_NUMBER)));
-            }
-            else if(DAY_NUMBER >= breakPoints[1] && DAY_NUMBER < breakPoints[2]) {
-                uint256 length = breakPoints[2] - breakPoints[1];
-                uint256[] memory array = new uint256[](length);
+                if(DAY_NUMBER >= breakPoints[0] && DAY_NUMBER < breakPoints[1]) {
+                    return generateMetadata(DAY_NUMBER);
+                } else if(DAY_NUMBER >= breakPoints[1] && DAY_NUMBER < breakPoints[2]) {
+                    uint256 length = breakPoints[2] - breakPoints[1];
+                    uint256[] memory array = new uint256[](length);
 
-                for(uint256 i; i < length; i++) {
-                    array[i] = i + breakPoints[1];
+                    for(uint256 i; i < length;) {
+                        array[i] = i + breakPoints[1];
+                        unchecked {
+                            i++;
+                        }
+                    }
+
+                    for(uint256 i = length - 1; i > 0; i--) {
+                        uint256 j = TokenFacetLib.random((tokenId), i + 1);
+                        (array[i], array[j]) = (array[j], array[i]);
+                    }
+
+                    uint256 currentDay = array[DAY_NUMBER - breakPoints[1]];
+                    return generateMetadata(currentDay);
+                } else if (DAY_NUMBER >= breakPoints[2]) {
+                    return generateMetadata(DEFAULT_AFTER_ONE_YEAR);
                 }
-
-                for(uint256 i = length - 1; i > 0; i--) {
-                    uint256 j = TokenFacetLib.random((tokenId), i + 1);
-                    (array[i], array[j]) = (array[j], array[i]);
-                }
-
-                uint256 currentDayURI = array[DAY_NUMBER - breakPoints[1]];
-                return string(abi.encodePacked(_baseURI(),  _toString(currentDayURI)));
-            }
-            else if (DAY_NUMBER >= breakPoints[2]) {
-                return string(abi.encodePacked(_baseURI(),  _toString(DEFAULT_AFTER_ONE_YEAR)));
-            }
-        } 
-        else {
-            return string(abi.encodePacked(_baseURI(), _toString(0)));
-        }   
+        } else {
+            return generateMetadata(0);
+        }
     }
 
     function exists(uint256 tokenId) external view returns (bool) {
@@ -236,10 +304,6 @@ contract TokenFacet is ERC721AUpgradeable {
         super._safeMint(to, amount);
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return TokenFacetLib.getState().baseURI;
-    }
-
     function _beforeTokenTransfers(
         address from,
         address to,
@@ -248,5 +312,28 @@ contract TokenFacet is ERC721AUpgradeable {
     ) internal override {
         super._beforeTokenTransfers(from, to, startTokenId, quantity);
         GlobalState.requireContractIsNotPaused();
+    }
+
+    function generateMetadata(uint256 day) internal view returns (string memory) {
+        bytes memory byteString;
+        string[] memory image = TokenFacetLib.getState().image;
+        uint256 length = image.length;
+
+        for(uint256 i; i < length;) {
+            if(TokenFacetLib.checkTag(image[i], TokenFacetLib.DAY_TAG)) {
+               byteString = abi.encodePacked(byteString, _toString(day)); 
+            }
+            else if (TokenFacetLib.checkTag(image[i], TokenFacetLib.CITY_TAG)) {
+               byteString = abi.encodePacked(byteString, TokenFacetLib.getCity(day));
+            }
+            else {
+                byteString = abi.encodePacked(byteString, image[i]);
+            }
+            unchecked {
+                i++;
+            }
+        }
+
+        return string(byteString);
     }
 }

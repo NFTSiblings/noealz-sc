@@ -7,11 +7,11 @@ module.exports = {
   networks: {
     goerli: {
       url: "https://goerli.infura.io/v3/" + process.env.infuraApiKey,
-      accounts: [process.env.account]
+      accounts: process.env.account
     },
     mainnet: {
       url: "https://mainnet.infura.io/v3/" + process.env.infuraApiKey,
-      accounts: [process.env.account]
+      accounts: process.env.account
     }
   },
   etherscan: {

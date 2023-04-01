@@ -67,8 +67,6 @@ contract DiamondInit {
 
     // TokenFacet //
 
-    string private constant baseURI = "https://gateway.pinata.cloud/ipfs/.../?"; // tbd
-
     string private constant name = "MomentsAsia365";
     string private constant symbol = "MA365";
     uint256 private constant startTokenId = 0;
@@ -101,7 +99,6 @@ contract DiamondInit {
         s1.globalRandom = globalRandom;
         s1.breakPoints = breakPoints;
         s1.price = prices;
-        s1.baseURI = baseURI;
         s1.walletCap = walletCap;
 
         ERC721AStorage.Layout storage s2 = ERC721AStorage.layout();
@@ -111,6 +108,8 @@ contract DiamondInit {
         s2._currentIndex = startTokenId;
 
         ERC721A__InitializableStorage.layout()._initialized = true;
+
+        TokenFacetLib.initImage();
     }
 
     // ERC165Facet //
@@ -159,7 +158,7 @@ contract DiamondInit {
 
     // SaleHandlerFacet //
 
-    uint256 private constant privSaleTimestamp = 1679255526; //tbd
+    uint256 private constant privSaleTimestamp = 1680387146; //tbd
     uint256 private constant publicSaleLength = 86400; //tbd
 
     function initSaleHandlerFacet() public {
