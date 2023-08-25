@@ -1,23 +1,19 @@
-const diamondName = "ERC721ADiamondTemplate"
+const diamondName = "MomentsAsia365"
 
 // set DiamondInit to the contract address of an existing initialiser contract,
 // or set it to "deploy" to have the script deploy it, or set it to false to
 // deploy without an intialiser contract.
-const DiamondInit = "0xb7F4e89CA1992900AD7DFB17CC9A3F7Bd6398006"
+const DiamondInit = "deploy"
 
 // List of existing facets to be added to the diamond
 // If DiamondCutFacet is not listed, it will be deployed
 const existingFacets = { // Goerli
-  DiamondCutFacet: "0xC38Bd9aE7ceeFA705579B71c0295Eb532d6B75D3",
-  DiamondLoupeFacet: "0xD470198BF69e77df0887Da5e5300C945A56F9aE0",
-  AdminPauseFacet: "0x326625BB25A27e24415D80448862ef876d4A4b80",
-  AdminPrivilegesFacet: "0x33d110b29E64F88374dceD2B6d2C66328F7428A0",
-  AllowlistFacet: "0xf941A38dEFA977a5Ab5d6264190c2f787a038a9e",
-  TokenFacet: "0xb0EEd95E6B06eeFc153E7e1FB3Da76f76d79F580",
-  ERC165Facet: "0xE723DF1C9156bA14f795C320214E22df0d0939D6",
-  RoyaltiesConfigFacet: "0x1070d9EE14a3cda937522D14040125dbCDF35C24",
-  SaleHandlerFacet: "0xB1086C9Bea003259d6a85A04475d656F2dA6E291",
-  PaymentSplitterFacet: "0xBe6334e3CB600d3A627db20661a34557edc1fEd5"
+  DiamondCutFacet: "0xD5Ff2F83c7a84E85c40fA2f53Fc1Dd8495E33502",
+  DiamondLoupeFacet: "0x888ADa8C9FD8d7DA636b764cafcCFDf9c277A46F",
+  AdminPauseFacet: "0x142dF15ce449f083aDf7fC74F7B6CbB4d3d775B8",
+  AdminPrivilegesFacet: "0x88484E465D1eD933d3762D76276951F3FFC243fB",
+  ERC165Facet: "0xBbcFE667c443C475a5F0bB4E4Fb8Aaa14EE75E29",
+  RoyaltiesConfigFacet: "0x1832022d2873FA913391091F0ca4d03e68dC3335",
 }
 
 // Optionally deploy facets which exists in the facets folder but are not

@@ -23,16 +23,16 @@ library TokenFacetLib {
 
 
     struct state {
+        uint256 startTimeStamp;
+        uint256 endTimeStamp;
         uint256 globalRandom;
-        uint256 maxSupply;
         uint256[] breakPoints;
-        uint256[] walletCap;
         uint256[] price;
         string[] image;
         bool burnStatus;
 
         mapping (uint256 => string) dayToCity;
-        mapping(uint256 => uint256) frozen;
+        mapping (uint256 => uint256) frozen;
     }
 
     /**
@@ -87,18 +87,25 @@ library TokenFacetLib {
 /**************************************************************/
 
 import { GlobalState } from "../libraries/GlobalState.sol";
-import { SaleHandlerLib } from "./SaleHandlerFacet.sol";
 import { AllowlistLib } from "./AllowlistFacet.sol";
 
 import 'erc721a-upgradeable/contracts/ERC721AUpgradeable.sol';
 
 contract TokenFacet is ERC721AUpgradeable {
 
-    // VARIABLE GETTERS //
+    // MODIFIERS //__ERC721A_init
 
-    function maxSupply() external view returns (uint256) {
-        return TokenFacetLib.getState().maxSupply;
+    modifier onlyAdmins {
+        GlobalState.requireCallerIsAdmin();
+        _;
     }
+
+    modifier contractNotPause {
+        GlobalState.requireContractIsNotPaused();
+        _;
+    }
+
+    // VARIABLE GETTERS //
     
     // Next three functions are for testing, not sure if they are required in production
     function getBreakPoints() external view returns (uint256[] memory) {
@@ -113,15 +120,15 @@ contract TokenFacet is ERC721AUpgradeable {
         return TokenFacetLib.getState().dayToCity[day];
     }
 
-    function walletCapAL() external view returns (uint256) {
-        return TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)];
+    function startTimeStamp() external view returns (uint256) {
+        return TokenFacetLib.getState().startTimeStamp;
     }
 
-    function walletCap() external view returns (uint256) {
-        return TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Public)];
+    function endTimeStamp() external view returns (uint256) {
+        return TokenFacetLib.getState().endTimeStamp;
     }
 
-    function priceAL() external view returns (uint256) {
+    function priceAl() external view returns (uint256) {
         return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)];
     }
 
@@ -133,48 +140,60 @@ contract TokenFacet is ERC721AUpgradeable {
         return TokenFacetLib.getState().burnStatus;
     }
 
-    // SETUP & ADMIN FUNCTIONS //
-
-    function setPrices(uint256 _price, uint256 _priceAL) external {
-        GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)] = _priceAL;
-        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)] = _price;
+    function isSaleOpen() public view returns (bool) {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        if(s.startTimeStamp == 0) return false;
+        else {
+            if(s.endTimeStamp == 0) {
+                return block.timestamp >= s.startTimeStamp;
+            }
+            else {
+                return
+                    block.timestamp >= s.startTimeStamp &&
+                    block.timestamp < s.endTimeStamp;
+            }
+        }
     }
 
-    function setBreakPoints(uint256[] memory breakPoints) external {
-        GlobalState.requireCallerIsAdmin();
+    // SETUP & ADMIN FUNCTIONS //
+
+    function setBreakPoints(uint256[] memory breakPoints) external onlyAdmins {
         require(breakPoints.length == 3, "Improper Input");
         TokenFacetLib.getState().breakPoints = breakPoints;
     }
 
-    function setWalletCaps(uint256 _walletCap, uint256 _walletCapAL) external {
-        GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)] = _walletCapAL;
-        TokenFacetLib.getState().walletCap[uint256(TokenFacetLib.WalletCapType.Public)] = _walletCap;
+    function setPrices(uint256 _price, uint256 _priceAL) external onlyAdmins {
+        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)] = _priceAL;
+        TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)] = _price;
     }
 
-    function toggleBurnStatus() external {
-        GlobalState.requireCallerIsAdmin();
-        TokenFacetLib.getState().burnStatus = !TokenFacetLib.getState().burnStatus;
-    }
-
-    function setName(string memory name) external {
-        GlobalState.requireCallerIsAdmin();
+    function setName(string memory name) external onlyAdmins {
         ERC721AStorage.layout()._name = name;
     }
 
-    function setSymbol(string memory symbol) external {
-        GlobalState.requireCallerIsAdmin();
+    function setSymbol(string memory symbol) external onlyAdmins {
         ERC721AStorage.layout()._symbol = symbol;
     }
 
-    function setImage(string[] memory image) external {
-        GlobalState.requireCallerIsAdmin();
+    function setImage(string[] memory image) external onlyAdmins {
         TokenFacetLib.getState().image = image;
     }
 
-    function setDayToCity(uint256[] memory day, string[] memory city) external {
-        GlobalState.requireCallerIsAdmin();
+    function toggleBurnStatus() external onlyAdmins {
+        TokenFacetLib.getState().burnStatus = !TokenFacetLib.getState().burnStatus;
+    }
+
+    function startSale(uint256 startTimeStamp) external onlyAdmins {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        startTimeStamp == 0 ? s.startTimeStamp = block.timestamp : s.startTimeStamp = startTimeStamp;
+    }
+
+    function stopSale(uint256 endTimeStamp) external onlyAdmins {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        endTimeStamp == 0 ? s.endTimeStamp = block.timestamp : s.endTimeStamp = endTimeStamp;
+    }
+
+    function setDayToCity(uint256[] memory day, string[] memory city) external onlyAdmins {
         require(day.length == city.length, "improper input");
 
         TokenFacetLib.state storage s = TokenFacetLib.getState();
@@ -189,62 +208,51 @@ contract TokenFacet is ERC721AUpgradeable {
         }
     }
 
-    function reserve(uint256 amount, address recipient) external {
+    function reserve(address[] memory recipient, uint256[] memory amount) external onlyAdmins {
+        require(
+            recipient.length == amount.length,
+            "TokenFacet: invalid inputs"
+        );
         GlobalState.requireCallerIsAdmin();
-        _safeMint(recipient, amount);
+        for(uint256 i; i < recipient.length;) {
+            _safeMint(recipient[i], amount[i]);
+            unchecked{
+                i++;
+            }
+        }
     }
 
     // PUBLIC FUNCTIONS //
 
-    function mint(uint256 amount, bytes32[] calldata _merkleProof) external payable {
-        GlobalState.requireContractIsNotPaused();
-
-        bool al = SaleHandlerLib.isPrivSaleActive();
-        if (al)  {
-            AllowlistLib.requireValidProof(_merkleProof);
-        } else {
-            require(
-                SaleHandlerLib.isPublicSaleActive(),
-                "TokenFacet: token sale is not available now"
-            );
-        }
-
+    function mint(uint256 amount, bytes32[] calldata _merkleProof) external payable contractNotPause {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
+        require(isSaleOpen(), "TokenFacet: token sale is not available now");
+
+        bool al = _merkleProof.length != 0;
+        if(al) {
+            AllowlistLib.requireValidProof(_merkleProof);
+        }
 
         uint256 _price = al ? s.price[uint256(TokenFacetLib.PriceType.Allowlist)] : s.price[uint256(TokenFacetLib.PriceType.Public)];
         require(msg.value == _price * amount, "TokenFacet: incorrect amount of ether sent");
 
-        uint256 _walletCap = al ? s.walletCap[uint256(TokenFacetLib.WalletCapType.Allowlist)] : s.walletCap[uint256(TokenFacetLib.WalletCapType.Public)];
-        require(
-            amount + _numberMinted(msg.sender) <= _walletCap || 
-            _walletCap == 0,
-            string(
-                abi.encodePacked(
-                    "TokenFacet: maximum tokens per wallet during ",
-                    al ? "private" : "public",
-                    " sale is ",
-                    _toString(_walletCap)
-                )
-            )
-        );
-
         _safeMint(msg.sender, amount);
     }
 
-    function burn(uint256 tokenId) external {
-        GlobalState.requireContractIsNotPaused();
+    function burn(uint256 tokenId) external contractNotPause {
         require(TokenFacetLib.getState().burnStatus, "TokenFacet: token burning is not available now");
 
         _burn(tokenId, true);
     }
 
-    function freeze(uint256 tokenId) external {
+    function freeze(uint256 tokenId) external contractNotPause {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
 
         require(s.frozen[tokenId] == 0, "URI already frozen for tokenId");
         require(ownerOf(tokenId) == msg.sender, "Only owners can freeze URI");
 
-        uint256 saleTimestamp = SaleHandlerLib.getState().saleTimestamp;
+        uint256 saleTimestamp = s.startTimeStamp;
+        require(saleTimestamp != 0, "TokenFacet: cannot freeze uri before sale has started");
         uint256 DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
         
         s.frozen[tokenId] = DAY_NUMBER;
@@ -254,14 +262,15 @@ contract TokenFacet is ERC721AUpgradeable {
 
     function tokenURI(uint256 tokenId) public override view returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
-        uint256 saleTimestamp = SaleHandlerLib.getState().saleTimestamp;
-        uint256 frozen = uint256(TokenFacetLib.getState().frozen[uint256(tokenId)]);
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        uint256 saleTimestamp = s.startTimeStamp;
+        uint256 frozen = uint256(s.frozen[uint256(tokenId)]);
         
-        if(block.timestamp >= saleTimestamp) {
+        if(block.timestamp >= saleTimestamp && saleTimestamp != 0) {
                 uint256 DAY_NUMBER;
                 if(frozen != 0) DAY_NUMBER = frozen;
                 else DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
-                uint256[] memory breakPoints = TokenFacetLib.getState().breakPoints;
+                uint256[] memory breakPoints = s.breakPoints;
                 uint256 DEFAULT_AFTER_ONE_YEAR = breakPoints[2];
 
                 if(DAY_NUMBER >= breakPoints[0] && DAY_NUMBER < breakPoints[1]) {
@@ -296,17 +305,7 @@ contract TokenFacet is ERC721AUpgradeable {
         return _exists(tokenId);
     }
 
-    function _safeMint(address to, uint256 amount) internal override {
-        uint256 totalMinted = _totalMinted();
-        uint256 _maxSupply = TokenFacetLib.getState().maxSupply;
-        require(
-            totalMinted + amount <= _maxSupply ||
-            _maxSupply == 0,
-            "TokenFacet: too few tokens remaining"
-        );
-
-        super._safeMint(to, amount);
-    }
+    // INTERNAL FUNCTIONS //
 
     function _beforeTokenTransfers(
         address from,

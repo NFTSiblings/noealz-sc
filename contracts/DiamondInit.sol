@@ -27,7 +27,6 @@ import { ERC165Lib } from "./facets/ERC165Facet.sol";
 import "erc721a-upgradeable/contracts/ERC721AStorage.sol";
 import "erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol";
 import { PaymentSplitterLib } from "./facets/PaymentSplitterFacet.sol";
-import { SaleHandlerLib } from "./facets/SaleHandlerFacet.sol";
 import { RoyaltiesConfigLib } from "./facets/RoyaltiesConfigFacet.sol";
 
 contract DiamondInit {
@@ -38,7 +37,6 @@ contract DiamondInit {
         initTokenFacet();
         initERC165Facet();
         initPaymentSplitterFacet();
-        initSaleHandlerFacet();
         initRoyaltiesConfigFacet();
     }
 
@@ -70,6 +68,8 @@ contract DiamondInit {
     string private constant name = "MomentsAsia365";
     string private constant symbol = "MA365";
     uint256 private constant startTokenId = 0;
+    uint256 private constant startTimeStamp = 1680387146;
+    uint256 private constant endTimeStamp = 1680473546; //tbd
 
     function initTokenFacet() public {
         // Variables in array format must be placed inside this
@@ -80,10 +80,6 @@ contract DiamondInit {
         uint256[] memory prices = new uint256[](2);
         prices[0] = 0.03 ether; // allowlist
         prices[1] = 0.0365 ether; // public
-
-        uint256[] memory walletCap = new uint256[](2);
-        walletCap[0] = 0;
-        walletCap[1] = 0;
 
         uint256[] memory breakPoints = new uint256[](3);
         breakPoints[0] = 0;
@@ -96,10 +92,11 @@ contract DiamondInit {
 
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
+        s1.startTimeStamp = startTimeStamp;
+        s1.endTimeStamp = endTimeStamp;
         s1.globalRandom = globalRandom;
         s1.breakPoints = breakPoints;
         s1.price = prices;
-        s1.walletCap = walletCap;
 
         ERC721AStorage.Layout storage s2 = ERC721AStorage.layout();
 
@@ -154,18 +151,6 @@ contract DiamondInit {
         for (uint256 i = 0; i < payees.length; i++) {
             PaymentSplitterLib._addPayee(payees[i], shares[i]);
         }
-    }
-
-    // SaleHandlerFacet //
-
-    uint256 private constant privSaleTimestamp = 1680387146; //tbd
-    uint256 private constant publicSaleLength = 86400; //tbd
-
-    function initSaleHandlerFacet() public {
-        SaleHandlerLib.state storage s = SaleHandlerLib.getState();
-
-        s.saleTimestamp = privSaleTimestamp;
-        s.publicSaleLength = publicSaleLength;
     }
 
     // RoyaltiesConfigFacet //

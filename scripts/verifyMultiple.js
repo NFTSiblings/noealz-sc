@@ -1,20 +1,19 @@
 const logErrors = false;
 const contracts = { // Goerli
     Diamond: {
-        address: "0x492fC41f031A28AbA7446c9422247541d2D37c80",
-        arguments: ["0xC38Bd9aE7ceeFA705579B71c0295Eb532d6B75D3"]
+        address: "0xb20a9918a821171b574156B72bE268ee30DC3331",
+        arguments: ["0xD5Ff2F83c7a84E85c40fA2f53Fc1Dd8495E33502"]
     },
-    DiamondInit: { address: "0xC16185B8c76311bFB46bC9b944777f729Cf6ee50" },
-    DiamondCutFacet: { address: "0xC38Bd9aE7ceeFA705579B71c0295Eb532d6B75D3" },
-    DiamondLoupeFacet: { address: "0xD470198BF69e77df0887Da5e5300C945A56F9aE0" },
-    AdminPauseFacet: { address: "0x326625BB25A27e24415D80448862ef876d4A4b80" },
-    AdminPrivilegesFacet: { address: "0x33d110b29E64F88374dceD2B6d2C66328F7428A0" },
-    AllowlistFacet: { address: "0xf941A38dEFA977a5Ab5d6264190c2f787a038a9e" },
-    CenterFacet: { address: "0xb0EEd95E6B06eeFc153E7e1FB3Da76f76d79F580" },
-    ERC165Facet: { address: "0xE723DF1C9156bA14f795C320214E22df0d0939D6" },
-    RoyaltiesConfigFacet: { address: "0x1070d9EE14a3cda937522D14040125dbCDF35C24" },
-    SaleHandlerFacet: { address: "0xB1086C9Bea003259d6a85A04475d656F2dA6E291" },
-    PaymentSplitterFacet: { address: "0xBe6334e3CB600d3A627db20661a34557edc1fEd5" }
+    DiamondInit: { address: "0x851067263EF0763c51eDABA7E01B4d09C65856AA" },
+    DiamondCutFacet: { address: "0xD5Ff2F83c7a84E85c40fA2f53Fc1Dd8495E33502" },
+    DiamondLoupeFacet: { address: "0x888ADa8C9FD8d7DA636b764cafcCFDf9c277A46F" },
+    AdminPauseFacet: { address: "0x142dF15ce449f083aDf7fC74F7B6CbB4d3d775B8" },
+    AdminPrivilegesFacet: { address: "0x88484E465D1eD933d3762D76276951F3FFC243fB" },
+    AllowlistFacet: { address: "0x4bC5cd1C7B868baC45A79637E8a407d176F78269" },
+    ERC165Facet: { address: "0xBbcFE667c443C475a5F0bB4E4Fb8Aaa14EE75E29" },
+    RoyaltiesConfigFacet: { address: "0x1832022d2873FA913391091F0ca4d03e68dC3335" },
+    PaymentSplitterFacet: { address: "0xcBb3A65715837Ef37bCCAa8279e101dF92Ef8D29" },
+    TokenFacet: { address: "0x2C3fd62BD75A148eba7c6C12b2FB19B475a012EE" }
 }
 
 ////////////////////////////////////////////////////////////

@@ -3,10 +3,11 @@ const { expect } = require("chai")
 const helpers = require("@nomicfoundation/hardhat-network-helpers")
 
 beforeEach(async () => {
-    [deployer, addr1] = await ethers.getSigners()
+    [deployer, addr1, addr2] = await ethers.getSigners()
     diamondAddress = await deployDiamond()
     
     AdminPauseFacet = await ethers.getContractAt('AdminPauseFacet', diamondAddress)
+    AllowlistFacet = await ethers.getContractAt('AllowlistFacet', diamondAddress)
     TokenFacet = await ethers.getContractAt('TokenFacet', diamondAddress)
 })
 
@@ -16,43 +17,41 @@ describe("TokenFacet", () => {
 
         describe("reserve", () => {
 
+            beforeEach(async () => {
+
+                address = [deployer.address, addr1.address]
+                amount = [2, 3]
+
+            })
+
             it("Is only callable by admins", async () => {
                 await expect(
-                    TokenFacet.connect(addr1).reserve(1, addr1.address)
+                    TokenFacet.connect(addr1).reserve(address, amount)
                 ).to.be.revertedWith("GlobalState: caller is not admin or owner")
             })
     
             it("Mints correct amount of tokens to correct address", async () => {
-                await TokenFacet.reserve(1, deployer.address)
+                await TokenFacet.connect(deployer).reserve(address, amount)
 
                 expect(await TokenFacet.ownerOf(0))
                 .to.equal(deployer.address)
+                expect(await TokenFacet.ownerOf(1))
+                .to.equal(deployer.address)
+                expect(await TokenFacet.ownerOf(2))
+                .to.equal(addr1.address)
+                expect(await TokenFacet.ownerOf(3))
+                .to.equal(addr1.address)
+                expect(await TokenFacet.ownerOf(4))
+                .to.equal(addr1.address)
 
-                expect(await TokenFacet.exists(1)).to.equal(false)
+                expect(await TokenFacet.exists(0)).to.equal(true)
+                expect(await TokenFacet.exists(1)).to.equal(true)
+                expect(await TokenFacet.exists(2)).to.equal(true)
+                expect(await TokenFacet.exists(3)).to.equal(true)
+                expect(await TokenFacet.exists(4)).to.equal(true)
             })
 
         })
-
-        // describe("recover", () => {
-
-        //     it("Is only callable by admins", async () => {
-        //         await TokenFacet.reserve(1, addr1.address)
-    
-        //         await expect(TokenFacet.connect(addr1).recover(0, deployer.address))
-        //         .to.be.revertedWith("GlobalState: caller is not admin or owner")
-        //     })
-    
-        //     it("Transfers the specified token to the specified address", async () => {
-        //         await TokenFacet.reserve(1, addr1.address)
-    
-        //         await expect(TokenFacet.recover(0, deployer.address))
-        //         .not.to.be.reverted
-    
-        //         expect(await TokenFacet.ownerOf(0))
-        //         .to.equal(deployer.address)
-        //     })
-    
-        // })
 
     })
 
@@ -265,7 +264,6 @@ describe("TokenFacet", () => {
                 allNumbers2 = array()
                 allNumbers3 = array()
                 allNumbers4 = array()
-                saleTimestamp = await SaleHandlerFacet.saleTimestamp()
                 cities = ["Hong Kong", "Seoul", "Tokyo", "Delhi"]
                 city366 = []
                 days366 = []
@@ -275,17 +273,16 @@ describe("TokenFacet", () => {
                     days366[i] = i
                 }
 
-                await SaleHandlerFacet.beginPrivSale()
                 await TokenFacet.setBreakPoints(breakPoints)
-                await TokenFacet.reserve(8, deployer.address)
+                await TokenFacet.reserve([deployer.address], [8])
                 await TokenFacet.setDayToCity(days366, city366)
 
             })
 
             it("Before sales start", async () => {
 
-                let currentTime = await helpers.time.latest()
-                if(currentTime > saleTimestamp) await SaleHandlerFacet.setSaleTimestamp(ethers.BigNumber.from(await helpers.time.latest()).add(100))
+                await TokenFacet.startSale(ethers.BigNumber.from(await helpers.time.latest()).add(100))
+
                 let currentDay = 0
                 let currentCity = city366[currentDay]
                 let metadata = `data:application/json;utf8,{"name":"Moments #${currentDay}","created_by":"Noelz","description":"Different Photos everyday","image":"https://newuri/${currentDay}","image_url":"https://newuri/${currentDay}","image_details":{"width":2160,"height":2160,"format":"PNG"},"attributes": [{"trait_type":"City","value":"${currentCity}"}]}`
@@ -295,9 +292,7 @@ describe("TokenFacet", () => {
 
             it("First 10 days uri works as intended", async () => {
 
-                let currentTime = await helpers.time.latest()
-                if(currentTime < saleTimestamp)await helpers.time.increaseTo(saleTimestamp)
-
+                await TokenFacet.startSale(0)
                 let frozenMetadata = await TokenFacet.tokenURI(freezenTokenIds[0])
                 await TokenFacet.freeze(freezenTokenIds[0])
 
@@ -325,6 +320,9 @@ describe("TokenFacet", () => {
                 let frozenMetadata = await TokenFacet.tokenURI(freezenTokenIds[1])
                 await TokenFacet.freeze(freezenTokenIds[1])
 
+                await TokenFacet.startSale(0)
+                await helpers.time.increase(SECOND_IN_A_DAY * 10)
+
                 for(let i = breakPoints[1]; i < breakPoints[2]; i++) {
 
                     for(let j = 0; j < 5; j++) {
@@ -338,7 +336,6 @@ describe("TokenFacet", () => {
                         expect(dayArray.includes(currentDay)).to.be.equal(true)
                         removeSpecificItem(dayArray, currentDay)
                         expect(dayArray.length).to.be.equal(arrayLength - ((i - breakPoints[1]) + 1))
-
                     }
 
                     expect(await TokenFacet.tokenURI(freezenTokenIds[1])).to.be.equal(frozenMetadata)
@@ -393,7 +390,7 @@ describe("TokenFacet", () => {
 
                 tokenIds = [0, 1, 2]
                 SECOND_IN_A_DAY = 86400
-                saleTimestamp = await SaleHandlerFacet.saleTimestamp()
+                saleTimestamp = await TokenFacet.startTimeStamp()
                 cities = ["Hong Kong", "Seoul", "Tokyo", "Delhi"]
                 city366 = []
                 days366 = []
@@ -404,7 +401,7 @@ describe("TokenFacet", () => {
                 }
 
                 await TokenFacet.setBreakPoints(breakPoints)
-                await TokenFacet.reserve(3, deployer.address)
+                await TokenFacet.reserve([deployer.address], [3])
                 await TokenFacet.setDayToCity(days366, city366)
 
             })
@@ -474,6 +471,79 @@ describe("TokenFacet", () => {
 
                 await expect(TokenFacet.freeze(tokenIds[0]))
                 .to.be.revertedWith("URI already frozen for tokenId")
+
+            })
+
+        })
+
+        describe("mint", async () => {
+
+            beforeEach(async () => {
+
+                rootHash = "0xcf1b6561beae041667a729b31fd5f3010c89b48e6594f13f046ba6e947d4a819"
+                addr1Proof = [
+                    '0xb33aa8fddc2ef6ab608eb0d847b0c7638946d98838cd3c5e229f1a9f9d68f527',
+                    '0x8a3552d60a98e0ade765adddad0a2e420ca9b1eef5f326ba7ab860bb4ea72c94',
+                    '0x7e62b0339f031def596d617b91dc1cba6d6dd8fe26c6d2c1dd68f6565c709c9b'
+                ]
+                await AllowlistFacet.connect(deployer).setMerkleRoot(rootHash)
+                amountToMint = 2
+                price = ethers.BigNumber.from(await TokenFacet.price()).mul(amountToMint)
+                priceAl = ethers.BigNumber.from(await TokenFacet.priceAl()).mul(amountToMint)
+
+            })
+
+            it("reverted when sale is closed", async () => {
+
+                await TokenFacet.stopSale(0)
+                expect(await TokenFacet.isSaleOpen()).to.equal(false)
+
+                await expect(TokenFacet.connect(addr1).mint(amountToMint, addr1Proof), {value: priceAl})
+                .to.be.revertedWith("TokenFacet: token sale is not available now")
+
+            })
+
+            it("reverted for wrong merkleproof", async () => {
+
+                await TokenFacet.startSale(0)
+                await TokenFacet.stopSale(ethers.BigNumber.from(await helpers.time.latest()).add(1000))
+                expect(await TokenFacet.isSaleOpen()).to.equal(true)
+
+                await expect(TokenFacet.connect(addr2).mint(amountToMint, addr1Proof, {value: priceAl}))
+                .to.be.revertedWith("AllowlistFacet: invalid merkle proof")
+
+            })
+
+            it("revert for incorrect amount", async () =>{
+
+                await TokenFacet.startSale(0)
+                await TokenFacet.stopSale(ethers.BigNumber.from(await helpers.time.latest()).add(1000))
+                expect(await TokenFacet.isSaleOpen()).to.equal(true)
+
+                await expect(TokenFacet.connect(addr1).mint(amountToMint, [], {value: priceAl}))
+                .to.be.revertedWith("TokenFacet: incorrect amount of ether sent")
+
+            })
+
+            it("non-allowlist sale", async () => {
+
+                await TokenFacet.startSale(0)
+                await TokenFacet.stopSale(ethers.BigNumber.from(await helpers.time.latest()).add(1000))
+                expect(await TokenFacet.isSaleOpen()).to.equal(true)
+
+                await expect(TokenFacet.connect(addr1).mint(amountToMint, addr1Proof, {value: priceAl}))
+                .to.changeEtherBalances([addr1.address, diamondAddress], [-priceAl, priceAl])
+
+            })
+
+            it("allowlist sale", async () => {
+
+                await TokenFacet.startSale(0)
+                await TokenFacet.stopSale(ethers.BigNumber.from(await helpers.time.latest()).add(1000))
+                expect(await TokenFacet.isSaleOpen()).to.equal(true)
+
+                await expect(TokenFacet.connect(addr2).mint(amountToMint, [], {value: price}))
+                .to.changeEtherBalances([addr2.address, diamondAddress], [-price, price])
 
             })
 
