@@ -93,13 +93,21 @@ import 'erc721a-upgradeable/contracts/ERC721AUpgradeable.sol';
 
 contract TokenFacet is ERC721AUpgradeable {
 
-    // MODIFIERS //__ERC721A_init
+    // MODIFIERS //
 
+    /**
+     * @dev modifier to restrict
+     *      function to admins
+     */
     modifier onlyAdmins {
         GlobalState.requireCallerIsAdmin();
         _;
     }
 
+    /**
+     * @dev modifier to restrict function
+     *      execution based on boolean
+     */
     modifier contractNotPause {
         GlobalState.requireContractIsNotPaused();
         _;
@@ -107,39 +115,64 @@ contract TokenFacet is ERC721AUpgradeable {
 
     // VARIABLE GETTERS //
     
-    // Next three functions are for testing, not sure if they are required in production
+    /**
+     * @dev Getter function for breakpoints variable
+     */
     function getBreakPoints() external view returns (uint256[] memory) {
         return TokenFacetLib.getState().breakPoints;
     }
-
+    /**
+     * @dev Getter function for image variable
+     */
     function getImage() external view returns (string[] memory) {
         return TokenFacetLib.getState().image;
     }
-
+    /**
+     * @dev return city for given day
+     * @param day day number whose city is requested
+     */
     function getDayToCity(uint256 day) external view returns (string memory) {
         return TokenFacetLib.getState().dayToCity[day];
     }
 
+    /**
+     * @dev returns startTimeStamp for the sale
+     */
     function startTimeStamp() external view returns (uint256) {
         return TokenFacetLib.getState().startTimeStamp;
     }
 
+    /**
+     * @dev returns endTimeStamp for the sale
+     */
     function endTimeStamp() external view returns (uint256) {
         return TokenFacetLib.getState().endTimeStamp;
     }
 
+    /**
+     * @dev returns allowlist price for sale
+     */
     function priceAl() external view returns (uint256) {
         return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)];
     }
 
+    /**
+     * @dev returns public price for sale
+     */
     function price() external view returns (uint256) {
         return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)];
     }
 
+    /**
+     * @dev returns burn status for tokens
+     */
     function burnStatus() external view returns (bool) {
         return TokenFacetLib.getState().burnStatus;
     }
 
+    /**
+     * @dev returns true if sale is open, otherwise false
+     */
     function isSaleOpen() public view returns (bool) {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
         if(s.startTimeStamp == 0) return false;
@@ -157,42 +190,88 @@ contract TokenFacet is ERC721AUpgradeable {
 
     // SETUP & ADMIN FUNCTIONS //
 
+    /**
+     * @dev admin only function to update
+     *      break points
+     * @param breakPoints breakpoints for generating metadata
+     */
     function setBreakPoints(uint256[] memory breakPoints) external onlyAdmins {
         require(breakPoints.length == 3, "Improper Input");
         TokenFacetLib.getState().breakPoints = breakPoints;
     }
 
+    /**
+     * @dev admin only function to update prices
+     * @param _price new public price to be set
+     * @param _priceAL new allowlist price to be set
+     */
     function setPrices(uint256 _price, uint256 _priceAL) external onlyAdmins {
         TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)] = _priceAL;
         TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)] = _price;
     }
 
+    /**
+     * @dev admin only function to update name
+     *      for the collection
+     * @param name new name to be set
+     */
     function setName(string memory name) external onlyAdmins {
         ERC721AStorage.layout()._name = name;
     }
 
+    /**
+     * @dev admin only function to update symbol
+     *      for the collection
+     * @param symbol new symbol to be set
+     */
     function setSymbol(string memory symbol) external onlyAdmins {
         ERC721AStorage.layout()._symbol = symbol;
     }
 
+    /**
+     * @dev admin only function to update image array used 
+     *      for generating metadata
+     * @param image array of strings to construct metadata
+     */
     function setImage(string[] memory image) external onlyAdmins {
         TokenFacetLib.getState().image = image;
     }
 
+    /**
+     * @dev admin only function that toggles burn status to control
+     *      whether tokens can be burned or not
+     */
     function toggleBurnStatus() external onlyAdmins {
         TokenFacetLib.getState().burnStatus = !TokenFacetLib.getState().burnStatus;
     }
 
+    /**
+     * @dev admins only function to set timestamp for starting sale
+     * @param startTimeStamp timestamp to start sale or 0 to stop
+     *                      sale now
+     */
     function startSale(uint256 startTimeStamp) external onlyAdmins {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
         startTimeStamp == 0 ? s.startTimeStamp = block.timestamp : s.startTimeStamp = startTimeStamp;
     }
 
+    /**
+     * @dev admins only function to set timestamp for ending sale
+     * @param endTimeStamp timestamp to end sale or 0 to stop
+     *                      sale now
+     */
     function stopSale(uint256 endTimeStamp) external onlyAdmins {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
         endTimeStamp == 0 ? s.endTimeStamp = block.timestamp : s.endTimeStamp = endTimeStamp;
     }
 
+    /**
+     * @dev admin only function to set Day for each particular
+     *      city
+     * @param day array of days for which city has to be set
+     * @param city array of city names which have to be set
+     *              for given days in first param
+     */
     function setDayToCity(uint256[] memory day, string[] memory city) external onlyAdmins {
         require(day.length == city.length, "improper input");
 
@@ -208,6 +287,14 @@ contract TokenFacet is ERC721AUpgradeable {
         }
     }
 
+    /**
+     * @dev admin-only function to mint batch mint NFTs to given
+     *      list of addresses and list of amount to respective
+     *      address
+     * @param recipient array of addresses to be minted NFTs to
+     * @param amount    array of amount of NFTs minted to addresses
+     *                  first param
+     */
     function reserve(address[] memory recipient, uint256[] memory amount) external onlyAdmins {
         require(
             recipient.length == amount.length,
@@ -224,6 +311,13 @@ contract TokenFacet is ERC721AUpgradeable {
 
     // PUBLIC FUNCTIONS //
 
+    /**
+     * @dev mint function intended to be directly called by users
+     * @param amount number of NFTs that the user wants to purchase
+     * @param _merkleProof  Send merkle proof for allowlist addresses
+     *                      otherwise send empty array for public
+     *                      purchase
+     */
     function mint(uint256 amount, bytes32[] calldata _merkleProof) external payable contractNotPause {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
         require(isSaleOpen(), "TokenFacet: token sale is not available now");
@@ -260,6 +354,12 @@ contract TokenFacet is ERC721AUpgradeable {
 
     // METADATA & MISC FUNCTIONS //
 
+    /**
+     * @dev calculates the currentDay for the token and returns metadata
+     *      based on that
+     * @param tokenId tokenId whose metadata is to be requested
+     * @return string metadata of the given tokenId
+     */
     function tokenURI(uint256 tokenId) public override view returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
         TokenFacetLib.state storage s = TokenFacetLib.getState();
@@ -300,13 +400,24 @@ contract TokenFacet is ERC721AUpgradeable {
             return generateMetadata(0);
         }
     }
-
+    /**
+     * @dev checks whether a given tokenId exists or not
+     * @param tokenId tokenId whose existance you want to check
+     * @return bool returns true if given tokenId exists
+     */
     function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);
     }
 
     // INTERNAL FUNCTIONS //
 
+    /**
+     * @dev Modifier the hook to check for pause variable
+     * @param from sender
+     * @param to new owner
+     * @param startTokenId starting tokenId for the transfer 
+     * @param quantity number of tokens to be sent
+     */
     function _beforeTokenTransfers(
         address from,
         address to,
@@ -317,6 +428,11 @@ contract TokenFacet is ERC721AUpgradeable {
         GlobalState.requireContractIsNotPaused();
     }
 
+
+    /**
+     * @dev Used to generate metadata for the given day
+     * @param day day whose metadata has to be generated
+     */
     function generateMetadata(uint256 day) internal view returns (string memory) {
         bytes memory byteString;
         string[] memory image = TokenFacetLib.getState().image;

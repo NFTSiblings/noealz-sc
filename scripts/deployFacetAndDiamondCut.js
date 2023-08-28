@@ -1,6 +1,6 @@
 const facetName = "ERC721AFacet"
-const Diamond = "0x31D7Fe07B61CB11f66A502a6990926B18A633A77"
-// const DiamondInit = "0x2440FbB92BADC44dAb731634B46842a3D73EBC41"
+const Diamond = ""
+// const DiamondInit = ""
 const DiamondInit = false
 const excludeFunctions = [
   "_setAux(address,uint64)",

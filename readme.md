@@ -1,11 +1,3 @@
-## **Deployments**
-
-This Diamond is deployed at 0x492fC41f031A28AbA7446c9422247541d2D37c80 on Goerli testnet.
-
-[Diamond Admin Panel](https://ethan-sibs.web.app/?diamond=0x492fC41f031A28AbA7446c9422247541d2D37c80)
-
-[Etherscan](https://goerli.etherscan.io/address/0x492fC41f031A28AbA7446c9422247541d2D37c80)
-
 ## **Adapting this Template for a New Project**
 
 - Run `npm install` to install required modules
@@ -103,12 +95,12 @@ Set the `existingFacets` variable on line 10 to an object which contains the nam
 ```jsx
 const existingFacets = { // Rinkeby
   // if DiamondCutFacet is not present, it will be deployed
-  DiamondCutFacet: "0x3C616F532cBA23F2A2690B12FCA495aAD4a16E43",
-  DiamondLoupeFacet: "0x706985da9e528b86c0553d676cac0315ff3c8d48",
-  AdminPauseFacet: "0x92e28663ebf433d8a3785d96a70a6233dff60233",
-  AdminPrivilegesFacet: "0x4b5f7cb0ebe63bfc7a125e7bea74f6beb5aef987",
-  ERC721AFacet: "0x80d2c3f931ffbdf2977c4517a6319a46ffd5fdf7",
-  CenterFacet: "0x2419740564746c90b64d0cc105f15617e4fe5462"
+  DiamondCutFacet: "",
+  DiamondLoupeFacet: "",
+  AdminPauseFacet: "",
+  AdminPrivilegesFacet: "",
+  ERC721AFacet: "",
+  CenterFacet: ""
 }
 ```
 
@@ -196,11 +188,11 @@ Setting the `logErrors` variable to true will log detailed error messages for ve
 ```jsx
 const contracts = {
   Diamond: {
-    address: "0x492fC41f031A28AbA7446c9422247541d2D37c80",
-    arguments: ["0xC38Bd9aE7ceeFA705579B71c0295Eb532d6B75D3"]
+    address: "",
+    arguments: [""]
   },
-  DiamondInit: { address: "0xC16185B8c76311bFB46bC9b944777f729Cf6ee50" },
-  DiamondCutFacet: { address: "0xC38Bd9aE7ceeFA705579B71c0295Eb532d6B75D3" }
+  DiamondInit: { address: "" },
+  DiamondCutFacet: { address: "" }
 }
 ```
 
