@@ -9,17 +9,6 @@ pragma solidity ^0.8.0;
  * ERC721A-DIAMOND-TEMPLATE by Bling Artist Lab
 /**************************************************************/
 
-// INFO STILL NEEDED:
-// - Client admin addresses
-// - Merkle Root (calc'd from whitelist addresses)
-// - Base URI
-// - Fund recipient addresses & rev splits
-// - Royalty recipient & fee percentage
-// - Date and time of sale (as epoch timestamp)
-// - Exact length of sale
-//
-// do we need a `recover` function?
-
 import { GlobalState } from "./libraries/GlobalState.sol";
 import { AllowlistLib } from "./facets/AllowlistFacet.sol";
 import { TokenFacetLib } from "./facets/TokenFacet.sol";
@@ -71,8 +60,8 @@ contract DiamondInit {
     string private constant postRevealURI = "https://bafybeiekwyjufrujp4t34sqdkg4zowylqfniww3iq5ec6h3z7qikfqzxta.ipfs.nftstorage.link/";
     string private constant baseURI = "https://bafybeific3erby3nlhhc7ngrarpvrps7lomgkqfwnlmbhshir2qisjox6y.ipfs.nftstorage.link/";
     uint256 private constant startTokenId = 0;
-    uint256 private constant startTimeStamp = 1680387146;
-    uint256 private constant endTimeStamp = 1680473546; //tbd
+    uint256 private constant startTimeStamp = 1709362427;
+    uint256 private constant endTimeStamp = 1711362427; //tbd
     uint256 private constant unitDuration = 86400;
 
     function initTokenFacet() public {
