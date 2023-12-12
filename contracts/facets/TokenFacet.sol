@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 /**************************************************************\
- * TokenFacetLib authored by Sibling Labs
+ * TokenFacetLib authored by Bling Artist Lab
  * Version 0.3.0
  * 
  * This library is designed to work in conjunction with
@@ -15,8 +15,12 @@ import "erc721a-upgradeable/contracts/ERC721AStorage.sol";
 library TokenFacetLib {
     bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("tokenfacet.storage");
 
+    string internal constant URI_TAG = '<URI>';
+    string internal constant EXT_TAG = '<EXT>';
     string internal constant DAY_TAG = '<DAY>';
+    string internal constant TOKEN_TAG = '<TOKEN>';
     string internal constant CITY_TAG = '<CITY>';
+    string internal constant FORGE_TAG = '<FORGE>';
 
     enum PriceType { Allowlist, Public }
     enum WalletCapType { Allowlist, Public }
@@ -25,14 +29,22 @@ library TokenFacetLib {
     struct state {
         uint256 startTimeStamp;
         uint256 endTimeStamp;
+        uint256 revealTimeStamp;
         uint256 globalRandom;
-        uint256[] breakPoints;
-        uint256[] price;
-        string[] image;
+        uint256 unitDuration;
+
+        string preRevealURI;
+        string postRevealURI;
+        string baseURI;
         bool burnStatus;
 
-        mapping (uint256 => string) dayToCity;
-        mapping (uint256 => uint256) frozen;
+        uint256[] breakPoints;
+        uint256[] price;
+        uint256[] day;
+        string[] city;
+        string[] image;
+
+        mapping (uint256 => uint256) forged;
     }
 
     /**
@@ -45,6 +57,12 @@ library TokenFacetLib {
         }
     }
 
+    /**
+     * @dev generate random number
+     * @param randomizer another factor to introduce randomness other than block factors
+     * @param max upper cap of the random number
+     * @return random number
+     */
     function random(uint256 randomizer, uint256 max) internal view returns (uint256) {
         return uint256(
             keccak256(
@@ -55,43 +73,190 @@ library TokenFacetLib {
         ) % max;
     }
 
-    function getCity(uint256 day) internal view returns (string memory) {
-        return getState().dayToCity[day];
+    /**
+     * @dev get city for given day
+     * @param day day number whose city has to be found
+     * @return name of the city
+     * @return remaining days
+     */
+    function getCity(uint256 day) internal view returns (string memory, uint256) {
+        state storage s = getState();
+        for(uint256 i; i < s.day.length;) {
+            if(i != 0) {
+                if(s.day[i - 1] < day  && day <= s.day[i]) {
+                    return (s.city[i], day - s.day[i - 1]);
+                }
+            }
+            else {
+                if(day <= s.day[i]) {
+                    return (s.city[i], day);
+                }
+            }
+            unchecked {
+                i++;
+            }
+        }
+        return ("", 0);
     }
-
+    /**
+     * compare given string and return whether they are same or not
+     * @param a first value to compare
+     * @param b second value to compare
+     * @return true if both are same
+     */
     function checkTag(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b)));
     }
 
+    /**
+     * check if given tokenId is forget or not
+     * @param tokenId token for which to check
+     * @return bool is given tokenId is forged
+     */
+    function isForged(uint256 tokenId) internal view returns (bool) {
+        return getState().forged[tokenId] != 0;
+    }
+     /**
+      * @dev initialize the image array
+      */
     function initImage() internal {
         string[] storage s = TokenFacetLib.getState().image;
 
         s.push('data:application/json;utf8,{"name":"Moments #');
-        s.push(DAY_TAG);
-        s.push('","created_by":"Noelz","description":"Different Photos everyday","image":"https://newuri/');
-        s.push(DAY_TAG);
-        s.push('","image_url":"https://newuri/');
-        s.push(DAY_TAG);
-        s.push('","image_details":{"width":2160,"height":2160,"format":"PNG"},"attributes": [{"trait_type":"City","value":"');
+        s.push(TOKEN_TAG);
+        s.push('","created_by":"Noelz","description":"Different Photos everyday","image":"');
+        s.push(URI_TAG);
+        s.push(EXT_TAG);
+        s.push('","image_url":"');
+        s.push(URI_TAG);
+        s.push(EXT_TAG);
+        s.push('","image_details":{"width":2160,"height":2160,"format":"JPEG"},"attributes": [{"trait_type":"City","value":"');
         s.push(CITY_TAG);
+        s.push('"},{"trait_type":"Day Number","value":"');
+        s.push(DAY_TAG);
+        s.push('"},{"trait_type":"Forged","value":"');
+        s.push(FORGE_TAG);
         s.push('"}]}');
+    }
+
+    /**
+     * @dev Used to generate metadata for the given day
+     * @param day day whose metadata has to be generated
+     */
+    function generateMetadata(uint256 day, uint256 tokenId) internal view returns (string memory) {
+        bytes memory byteString;
+        string[] memory image = TokenFacetLib.getState().image;
+        uint256 length = image.length;
+        (string memory city, uint256 currentDay) = getCity(day);
+        uint256 endDay = getState().breakPoints[2];
+
+        for(uint256 i; i < length;) {
+            if (checkTag(image[i], URI_TAG)) {
+                if(day == 0) {
+                    byteString = abi.encodePacked(byteString, getState().preRevealURI);
+                }
+                else if(day == endDay) {
+                    byteString = abi.encodePacked(byteString, getState().postRevealURI);
+                }
+                else {
+                    byteString = abi.encodePacked(byteString, getState().baseURI);
+                }
+            }
+            else if (checkTag(image[i], EXT_TAG)) {
+                if(!(day == 0 || day == endDay)) {
+                    byteString = abi.encodePacked(byteString, string(abi.encodePacked(city, " ", _toString(currentDay), ".jpg")));
+                }
+            }
+            else if (checkTag(image[i], DAY_TAG)) {
+                if(day != 366) {
+                    byteString = abi.encodePacked(byteString, _toString(day));
+                }
+                else {
+                    byteString = abi.encodePacked(byteString, "Promised");
+                }
+            }
+            else if (checkTag(image[i], CITY_TAG)) {
+               byteString = abi.encodePacked(byteString, city);
+            }
+            else if (checkTag(image[i], FORGE_TAG)) {
+                if(isForged(tokenId)) {
+                    byteString = abi.encodePacked(byteString, "true");
+                }
+                else {
+                    byteString = abi.encodePacked(byteString, "false");
+                }
+            }
+            else if (checkTag(image[i], TOKEN_TAG)) {
+                byteString = abi.encodePacked(byteString, _toString(tokenId));
+            }
+            else {
+                byteString = abi.encodePacked(byteString, image[i]);
+            }
+            unchecked {
+                i++;
+            }
+        }
+        return string(byteString);
+    }
+ 
+     /**
+     * @dev Converts a uint256 to its ASCII string decimal representation.
+     */
+    function _toString(uint256 value) internal pure returns (string memory str) {
+        assembly {
+            // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
+            // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
+            // We will need 1 word for the trailing zeros padding, 1 word for the length,
+            // and 3 words for a maximum of 78 digits. Total: 5 * 0x20 = 0xa0.
+            let m := add(mload(0x40), 0xa0)
+            // Update the free memory pointer to allocate.
+            mstore(0x40, m)
+            // Assign the `str` to the end.
+            str := sub(m, 0x20)
+            // Zeroize the slot after the string.
+            mstore(str, 0)
+
+            // Cache the end of the memory to calculate the length later.
+            let end := str
+
+            // We write the string from rightmost digit to leftmost digit.
+            // The following is essentially a do-while loop that also handles the zero case.
+            // prettier-ignore
+            for { let temp := value } 1 {} {
+                str := sub(str, 1)
+                // Write the character to the pointer.
+                // The ASCII index of the '0' character is 48.
+                mstore8(str, add(48, mod(temp, 10)))
+                // Keep dividing `temp` until zero.
+                temp := div(temp, 10)
+                // prettier-ignore
+                if iszero(temp) { break }
+            }
+
+            let length := sub(end, str)
+            // Move the pointer 32 bytes leftwards to make room for the length.
+            str := sub(str, 0x20)
+            // Store the length.
+            mstore(str, length)
+        }
     }
 }
 
 /**************************************************************\
- * TokenFacet authored by Sibling Labs
+ * TokenFacet authored by Bling Artist Lab
  * Version 0.6.0
  * 
  * This facet contract has been written specifically for
- * ERC721A-DIAMOND-TEMPLATE by Sibling Labs
+ * ERC721A-DIAMOND-TEMPLATE by Bling Artist Lab
 /**************************************************************/
 
 import { GlobalState } from "../libraries/GlobalState.sol";
 import { AllowlistLib } from "./AllowlistFacet.sol";
 
 import 'erc721a-upgradeable/contracts/ERC721AUpgradeable.sol';
+import 'erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol';
 
-contract TokenFacet is ERC721AUpgradeable {
+contract TokenFacet is ERC721AUpgradeable, ERC721AQueryableUpgradeable {
 
     // MODIFIERS //
 
@@ -132,39 +297,67 @@ contract TokenFacet is ERC721AUpgradeable {
      * @param day day number whose city is requested
      */
     function getDayToCity(uint256 day) external view returns (string memory) {
-        return TokenFacetLib.getState().dayToCity[day];
+        (string memory city,) = TokenFacetLib.getCity(day);
+        return city;
     }
 
     /**
-     * @dev returns startTimeStamp for the sale
+     * @dev Getter function for startTimeStamp
      */
     function startTimeStamp() external view returns (uint256) {
         return TokenFacetLib.getState().startTimeStamp;
     }
 
     /**
-     * @dev returns endTimeStamp for the sale
+     * @dev Getter function for endTimeStamp
      */
     function endTimeStamp() external view returns (uint256) {
         return TokenFacetLib.getState().endTimeStamp;
     }
 
     /**
-     * @dev returns allowlist price for sale
+     * @dev Getter function for revealTimeStamp
+     */
+    function revealTimeStamp() external view returns (uint256) {
+        return TokenFacetLib.getState().revealTimeStamp;
+    }
+
+    /**
+     * @dev Getter function for allowlist price
      */
     function priceAl() external view returns (uint256) {
         return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Allowlist)];
     }
 
     /**
-     * @dev returns public price for sale
+     * @dev Getter function for public price
      */
     function price() external view returns (uint256) {
         return TokenFacetLib.getState().price[uint256(TokenFacetLib.PriceType.Public)];
     }
 
     /**
-     * @dev returns burn status for tokens
+     * @dev Getter function for  unitDuration
+     */
+    function unitDuration() external view returns (uint256) {
+        return TokenFacetLib.getState().unitDuration;
+    }
+    /**
+     * @dev Getter function for preRevealURI
+     */
+    function preRevealURI() external view returns (string memory) {
+        return TokenFacetLib.getState().preRevealURI;
+    }
+
+    /**
+     * @dev Getter function for postRevealURI
+     */
+    function postRevealURI() external view returns (string memory) {
+        return TokenFacetLib.getState().postRevealURI;
+    }
+
+    /**
+     * @dev Getter function for burn status of tokens
      */
     function burnStatus() external view returns (bool) {
         return TokenFacetLib.getState().burnStatus;
@@ -188,7 +381,28 @@ contract TokenFacet is ERC721AUpgradeable {
         }
     }
 
+    /**
+     * @dev checks if given tokenId is forged or not
+     * @param tokenId token for which forged status has to be checked
+     */
+    function isForged(uint256 tokenId) external view returns (bool) {
+        return TokenFacetLib.isForged(tokenId);
+    }
+
     // SETUP & ADMIN FUNCTIONS //
+
+    /**
+     * @dev burn multiple token at once
+     * @param tokenIds array of tokens that are to be burned
+     */
+    function burnMany(uint256[] memory tokenIds) external onlyAdmins {
+        for(uint256 i; i < tokenIds.length;) {
+            _burn(tokenIds[i]);
+            unchecked {
+                i++;
+            }
+        }
+    }
 
     /**
      * @dev admin only function to update
@@ -237,6 +451,42 @@ contract TokenFacet is ERC721AUpgradeable {
         TokenFacetLib.getState().image = image;
     }
 
+    function setBaseURI(string memory uri) external onlyAdmins {
+        TokenFacetLib.getState().baseURI = uri;
+    }
+
+    /**
+     * @dev admin only function to change duration of image change
+     * @param time seconds in which image should change
+     */
+    function setUnitDuration(uint256 time) external onlyAdmins {
+        TokenFacetLib.getState().unitDuration = time;
+    }
+
+    /**
+     * @dev admin only function to change revealTimeStamp
+     * @param time timestamp of when the metadata has to be revealed
+     */
+    function setRevealTimeStamp(uint256 time) external onlyAdmins {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        time == 0 ? s.revealTimeStamp = block.timestamp : s.revealTimeStamp = time;
+    }
+
+    /**
+     * @dev admin only function to change preRevealURI
+     * @param uri new uri string to be set
+     */
+    function setPreRevealURI(string memory uri) external onlyAdmins {
+        TokenFacetLib.getState().preRevealURI = uri;
+    }
+    /**
+     * @dev admin only function to change postRevealURI
+     * @param uri new uri string to be set
+     */
+    function setPostRevealURI(string memory uri) external onlyAdmins {
+        TokenFacetLib.getState().postRevealURI = uri;
+    }
+
     /**
      * @dev admin only function that toggles burn status to control
      *      whether tokens can be burned or not
@@ -247,22 +497,22 @@ contract TokenFacet is ERC721AUpgradeable {
 
     /**
      * @dev admins only function to set timestamp for starting sale
-     * @param startTimeStamp timestamp to start sale or 0 to stop
+     * @param time timestamp to start sale or 0 to stop
      *                      sale now
      */
-    function startSale(uint256 startTimeStamp) external onlyAdmins {
+    function startSale(uint256 time) external onlyAdmins {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
-        startTimeStamp == 0 ? s.startTimeStamp = block.timestamp : s.startTimeStamp = startTimeStamp;
+        time == 0 ? s.startTimeStamp = block.timestamp : s.startTimeStamp = time;
     }
 
     /**
      * @dev admins only function to set timestamp for ending sale
-     * @param endTimeStamp timestamp to end sale or 0 to stop
+     * @param time timestamp to end sale or 0 to stop
      *                      sale now
      */
-    function stopSale(uint256 endTimeStamp) external onlyAdmins {
+    function stopSale(uint256 time) external onlyAdmins {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
-        endTimeStamp == 0 ? s.endTimeStamp = block.timestamp : s.endTimeStamp = endTimeStamp;
+        time == 0 ? s.endTimeStamp = block.timestamp : s.endTimeStamp = time;
     }
 
     /**
@@ -276,15 +526,9 @@ contract TokenFacet is ERC721AUpgradeable {
         require(day.length == city.length, "improper input");
 
         TokenFacetLib.state storage s = TokenFacetLib.getState();
-        uint256 length = day.length;
 
-        for(uint256 i; i < length;){
-            s.dayToCity[day[i]] = city[i];
-
-            unchecked {
-                i++;
-            }
-        }
+        s.day = day;
+        s.city = city;
     }
 
     /**
@@ -313,12 +557,12 @@ contract TokenFacet is ERC721AUpgradeable {
 
     /**
      * @dev mint function intended to be directly called by users
-     * @param amount number of NFTs that the user wants to purchase
+     * @param quantity number of NFTs that the user wants to purchase
      * @param _merkleProof  Send merkle proof for allowlist addresses
      *                      otherwise send empty array for public
      *                      purchase
      */
-    function mint(uint256 amount, bytes32[] calldata _merkleProof) external payable contractNotPause {
+    function mint(uint256 quantity, bytes32[] calldata _merkleProof) external payable contractNotPause {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
         require(isSaleOpen(), "TokenFacet: token sale is not available now");
 
@@ -328,31 +572,65 @@ contract TokenFacet is ERC721AUpgradeable {
         }
 
         uint256 _price = al ? s.price[uint256(TokenFacetLib.PriceType.Allowlist)] : s.price[uint256(TokenFacetLib.PriceType.Public)];
-        require(msg.value == _price * amount, "TokenFacet: incorrect amount of ether sent");
+        require(msg.value == _price * quantity, "TokenFacet: incorrect amount of ether sent");
 
-        _safeMint(msg.sender, amount);
+        _safeMint(msg.sender, quantity);
     }
 
+    /**
+     * @dev function for user to burn their token
+     * @param tokenId token which has to be burned
+     */
     function burn(uint256 tokenId) external contractNotPause {
         require(TokenFacetLib.getState().burnStatus, "TokenFacet: token burning is not available now");
 
         _burn(tokenId, true);
     }
 
-    function freeze(uint256 tokenId) external contractNotPause {
+    /**
+     * @dev allow users to forge their metadata
+     * @param tokenId token whose metadata has to be forge
+     */
+    function forge(uint256 tokenId) external contractNotPause {
         TokenFacetLib.state storage s = TokenFacetLib.getState();
 
-        require(s.frozen[tokenId] == 0, "URI already frozen for tokenId");
-        require(ownerOf(tokenId) == msg.sender, "Only owners can freeze URI");
+        require(s.forged[tokenId] == 0, "URI already forged for tokenId");
+        require(ownerOf(tokenId) == msg.sender, "Only owners can forge URI");
 
-        uint256 saleTimestamp = s.startTimeStamp;
-        require(saleTimestamp != 0, "TokenFacet: cannot freeze uri before sale has started");
-        uint256 DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
+        uint256 revealTimeStamp = s.revealTimeStamp;
+        require(revealTimeStamp != 0, "TokenFacet: cannot forge uri before sale has started");
+        uint256 DAY_NUMBER = ((block.timestamp - revealTimeStamp) / s.unitDuration) + 1;
         
-        s.frozen[tokenId] = DAY_NUMBER;
+        s.forged[tokenId] = DAY_NUMBER;
     }
 
     // METADATA & MISC FUNCTIONS //
+
+    /**
+     * @dev returns number of seconds remaining in metadata change
+     */
+    function remainingSeconds() external view returns (uint256) {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        uint256 unitduration = s.unitDuration;
+        uint256 timeStamp = s.revealTimeStamp;
+        if(block.timestamp >= timeStamp && timeStamp != 0) {
+            return (timeStamp + ((((block.timestamp - timeStamp) / unitduration) + 1) * unitduration)) - block.timestamp;
+        }
+        return timeStamp - block.timestamp;
+    }
+
+    /**
+     * @dev returns current day in metadata calculation
+     */
+    function currentDay() external view returns (uint256) {
+        TokenFacetLib.state storage s = TokenFacetLib.getState();
+        uint256 DAY_NUMBER;
+        uint256 timeStamp = s.revealTimeStamp;
+        if(block.timestamp >= timeStamp && timeStamp != 0) {
+            DAY_NUMBER = ((block.timestamp - timeStamp) / s.unitDuration) + 1;
+        }
+        return DAY_NUMBER;
+    }
 
     /**
      * @dev calculates the currentDay for the token and returns metadata
@@ -360,21 +638,20 @@ contract TokenFacet is ERC721AUpgradeable {
      * @param tokenId tokenId whose metadata is to be requested
      * @return string metadata of the given tokenId
      */
-    function tokenURI(uint256 tokenId) public override view returns (string memory) {
+    function tokenURI(uint256 tokenId) public override(ERC721AUpgradeable, IERC721AUpgradeable) view returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
         TokenFacetLib.state storage s = TokenFacetLib.getState();
-        uint256 saleTimestamp = s.startTimeStamp;
-        uint256 frozen = uint256(s.frozen[uint256(tokenId)]);
+        uint256 timeStamp = s.revealTimeStamp;
+        uint256 forged = uint256(s.forged[uint256(tokenId)]);
         
-        if(block.timestamp >= saleTimestamp && saleTimestamp != 0) {
+        if(block.timestamp >= timeStamp && timeStamp != 0) {
                 uint256 DAY_NUMBER;
-                if(frozen != 0) DAY_NUMBER = frozen;
-                else DAY_NUMBER = ((block.timestamp - saleTimestamp) / 1 days) + 1;
+                if(forged != 0) DAY_NUMBER = forged;
+                else DAY_NUMBER = ((block.timestamp - timeStamp) / s.unitDuration) + 1;
                 uint256[] memory breakPoints = s.breakPoints;
-                uint256 DEFAULT_AFTER_ONE_YEAR = breakPoints[2];
 
                 if(DAY_NUMBER >= breakPoints[0] && DAY_NUMBER < breakPoints[1]) {
-                    return generateMetadata(DAY_NUMBER);
+                    return TokenFacetLib.generateMetadata(DAY_NUMBER, tokenId);
                 } else if(DAY_NUMBER >= breakPoints[1] && DAY_NUMBER < breakPoints[2]) {
                     uint256 length = breakPoints[2] - breakPoints[1];
                     uint256[] memory array = new uint256[](length);
@@ -392,14 +669,16 @@ contract TokenFacet is ERC721AUpgradeable {
                     }
 
                     uint256 currentDay = array[DAY_NUMBER - breakPoints[1]];
-                    return generateMetadata(currentDay);
+                    return TokenFacetLib.generateMetadata(currentDay, tokenId);
                 } else if (DAY_NUMBER >= breakPoints[2]) {
-                    return generateMetadata(DEFAULT_AFTER_ONE_YEAR);
+                    return TokenFacetLib.generateMetadata(breakPoints[2], tokenId);
                 }
         } else {
-            return generateMetadata(0);
+            return TokenFacetLib.generateMetadata(0, tokenId);
         }
+        return "";
     }
+
     /**
      * @dev checks whether a given tokenId exists or not
      * @param tokenId tokenId whose existance you want to check
@@ -426,33 +705,5 @@ contract TokenFacet is ERC721AUpgradeable {
     ) internal override {
         super._beforeTokenTransfers(from, to, startTokenId, quantity);
         GlobalState.requireContractIsNotPaused();
-    }
-
-
-    /**
-     * @dev Used to generate metadata for the given day
-     * @param day day whose metadata has to be generated
-     */
-    function generateMetadata(uint256 day) internal view returns (string memory) {
-        bytes memory byteString;
-        string[] memory image = TokenFacetLib.getState().image;
-        uint256 length = image.length;
-
-        for(uint256 i; i < length;) {
-            if(TokenFacetLib.checkTag(image[i], TokenFacetLib.DAY_TAG)) {
-               byteString = abi.encodePacked(byteString, _toString(day)); 
-            }
-            else if (TokenFacetLib.checkTag(image[i], TokenFacetLib.CITY_TAG)) {
-               byteString = abi.encodePacked(byteString, TokenFacetLib.getCity(day));
-            }
-            else {
-                byteString = abi.encodePacked(byteString, image[i]);
-            }
-            unchecked {
-                i++;
-            }
-        }
-
-        return string(byteString);
     }
 }

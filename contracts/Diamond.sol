@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * Diamond contract authored by Sibling Labs
+ * Diamond contract authored by Bling Artist Lab
  * Version 0.1.0
  * 
  * Adapted from work by Nick Mudge

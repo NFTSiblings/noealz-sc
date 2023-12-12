@@ -48,7 +48,9 @@ describe("Initialisation", () => {
     })
 
     it("TokenFacet is initialised correctly", async () => {
-        baseURI = "https://gateway.pinata.cloud/ipfs/.../?"
+        baseURI = "https://bafybeific3erby3nlhhc7ngrarpvrps7lomgkqfwnlmbhshir2qisjox6y.ipfs.nftstorage.link/"
+        preRevealURI = "ipfs://bafybeifucwd44wlg7ewt3pjwbtmytpsrshans5agistj6ikgbr5mzxj4dy/prereveal.png"
+        postRevealURI = "https://bafybeiekwyjufrujp4t34sqdkg4zowylqfniww3iq5ec6h3z7qikfqzxta.ipfs.nftstorage.link/"
         breakPoints = [0, 11, 366]
         prices = [ethers.utils.parseEther("0.03"), ethers.utils.parseEther("0.0365")]
         contractName = "MomentsAsia365"
@@ -56,6 +58,47 @@ describe("Initialisation", () => {
         startTokenId = 0
         startTimeStamp = 1680387146
         endTimeStamp = 1680473546
+        unitDuration = 86400
+        city = [
+            "Seoul",
+            "Incheon",
+            "Suwon",
+            "Boseong",
+            "Gyeongju",
+            "Busan",
+            "Ulsan",
+            "Cheonan",
+            "Suncheon",
+            "Korea",
+            "Osaka",
+            "Kyoto",
+            "Koyasan",
+            "Tokyo",
+            "Enoshima",
+            "Japan",
+            "Hong Kong",
+            "Macau"
+        ]
+        day = [
+            61,
+            64,
+            66,
+            67,
+            68,
+            120,
+            121,
+            126,
+            127,
+            135,
+            187,
+            229,
+            241,
+            294,
+            297,
+            302,
+            354,
+            365
+        ]
 
         await TokenFacet.reserve([deployer.address], [1])
         expect(await TokenFacet.exists(0)).to.equal(true)
@@ -66,6 +109,66 @@ describe("Initialisation", () => {
         expect(await TokenFacet.symbol()).to.equal(contractSymbol)
         expect(await TokenFacet.startTimeStamp()).to.equal(startTimeStamp)
         expect(await TokenFacet.endTimeStamp()).to.equal(endTimeStamp)
+        expect(await TokenFacet.revealTimeStamp()).to.equal(startTimeStamp)
+        expect(await TokenFacet.unitDuration()).to.equal(unitDuration)
+
+        for(let i = 0; i < 365; i++) {
+            if(i <= day[0]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[0])
+            }
+            else if(i <= day[1]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[1])
+            }
+            else if(i <= day[2]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[2])
+            }
+            else if(i <= day[3]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[3])
+            }
+            else if(i <= day[4]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[4])
+            }
+            else if(i <= day[5]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[5])
+            }
+            else if(i <= day[6]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[6])
+            }
+            else if(i <= day[7]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[7])
+            }
+            else if(i <= day[8]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[8])
+            }
+            else if(i <= day[9]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[9])
+            }
+            else if(i <= day[10]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[10])
+            }
+            else if(i <= day[11]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[11])
+            }
+            else if(i <= day[12]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[12])
+            }
+            else if(i <= day[13]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[13])
+            }
+            else if(i <= day[14]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[14])
+            }
+            else if(i <= day[15]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[15])
+            }
+            else if(i <= day[16]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[16])
+            }
+            else if(i <= day[17]) {
+                expect(await TokenFacet.getDayToCity(i)).to.equal(city[17])
+            }
+
+        }
     })
 
     it("ERC165Facet is initialised correctly", async () => {

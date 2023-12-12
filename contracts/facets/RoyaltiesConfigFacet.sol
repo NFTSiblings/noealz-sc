@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * RoyaltiesConfigLib authored by Sibling Labs
+ * RoyaltiesConfigLib authored by Bling Artist Lab
  * Version 0.1.0
  * 
  * This library is designed to work in conjunction with
@@ -39,7 +39,7 @@ library RoyaltiesConfigLib {
 }
 
 /**************************************************************\
- * RoyaltiesConfigFacet authored by Sibling Labs
+ * RoyaltiesConfigFacet authored by Bling Artist Lab
  * Version 0.1.0
 /**************************************************************/
 

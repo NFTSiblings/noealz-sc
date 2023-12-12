@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * ERC165Lib authored by Sibling Labs
+ * ERC165Lib authored by Bling Artist Lab
  * Version 0.1.0
  * 
  * This library is designed to work in conjunction with
@@ -29,7 +29,7 @@ library ERC165Lib {
 }
 
 /**************************************************************\
- * ERC165Facet authored by Sibling Labs
+ * ERC165Facet authored by Bling Artist Lab
  * Version 0.1.0
 /**************************************************************/
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * PaymentSplitterLib authored by Sibling Labs
+ * PaymentSplitterLib authored by Bling Artist Lab
  * Version 0.2.0
  * 
  * This library is designed to work in conjunction with
@@ -61,7 +61,7 @@ library PaymentSplitterLib {
 }
 
 /**************************************************************\
- * PaymentSplitterFacet authored by Sibling Labs
+ * PaymentSplitterFacet authored by Bling Artist Lab
  * Version 0.3.0
  * 
  * Adapted from a contract by OpenZeppelin:

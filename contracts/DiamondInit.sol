@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * Initialiser contract authored by Sibling Labs
+ * Initialiser contract authored by Bling Artist Lab
  * Version 0.4.0
  * 
  * This initialiser contract has been written specifically for
- * ERC721A-DIAMOND-TEMPLATE by Sibling Labs
+ * ERC721A-DIAMOND-TEMPLATE by Bling Artist Lab
 /**************************************************************/
 
 // INFO STILL NEEDED:
@@ -65,11 +65,15 @@ contract DiamondInit {
 
     // TokenFacet //
 
-    string private constant name = "MomentsAsia365";
-    string private constant symbol = "MA365";
+    string private constant name = "TestMomentsAsia365";
+    string private constant symbol = "TMA365";
+    string private constant preRevealURI = "ipfs://bafybeifucwd44wlg7ewt3pjwbtmytpsrshans5agistj6ikgbr5mzxj4dy/prereveal.png";
+    string private constant postRevealURI = "https://bafybeiekwyjufrujp4t34sqdkg4zowylqfniww3iq5ec6h3z7qikfqzxta.ipfs.nftstorage.link/";
+    string private constant baseURI = "https://bafybeific3erby3nlhhc7ngrarpvrps7lomgkqfwnlmbhshir2qisjox6y.ipfs.nftstorage.link/";
     uint256 private constant startTokenId = 0;
     uint256 private constant startTimeStamp = 1680387146;
     uint256 private constant endTimeStamp = 1680473546; //tbd
+    uint256 private constant unitDuration = 86400;
 
     function initTokenFacet() public {
         // Variables in array format must be placed inside this
@@ -77,26 +81,74 @@ contract DiamondInit {
         // will not be accessible by the delegatecall from the
         // diamond contract.
 
-        uint256[] memory prices = new uint256[](2);
-        prices[0] = 0.03 ether; // allowlist
-        prices[1] = 0.0365 ether; // public
+        uint256[] memory price = new uint256[](2);
+        price[0] = 0.03 ether; // allowlist
+        price[1] = 0.0365 ether; // public
 
         uint256[] memory breakPoints = new uint256[](3);
         breakPoints[0] = 0;
         breakPoints[1] = 11;
         breakPoints[2] = 366;
 
+        string[] memory city = new string[](18);
+        city[0] = "Seoul";
+        city[1] = "Incheon";
+        city[2] = "Suwon";
+        city[3] = "Boseong";
+        city[4] = "Gyeongju";
+        city[5] = "Busan";
+        city[6] = "Ulsan";
+        city[7] = "Cheonan";
+        city[8] = "Suncheon";
+        city[9] = "Korea";
+        city[10] = "Osaka";
+        city[11] = "Kyoto";
+        city[12] = "Koyasan";
+        city[13] = "Tokyo";
+        city[14] = "Enoshima";
+        city[15] = "Japan";
+        city[16] = "Hong Kong";
+        city[17] = "Macau";
+
+        uint256[] memory day = new uint256[](18);
+        day[0] = 61;
+        day[1] = 64;
+        day[2] = 66;
+        day[3] = 67;
+        day[4] = 68;
+        day[5] = 120;
+        day[6] = 121;
+        day[7] = 126;
+        day[8] = 127;
+        day[9] = 135;
+        day[10] = 187;
+        day[11] = 229;
+        day[12] = 241;
+        day[13] = 294;
+        day[14] = 297;
+        day[15] = 302;
+        day[16] = 354;
+        day[17] = 365;
+
         uint256 globalRandom = uint256(keccak256(abi.encodePacked(
-            block.number, block.timestamp, block.difficulty, block.gaslimit, msg.sender, gasleft(), msg.data, tx.gasprice
+            block.number, block.timestamp, block.prevrandao, block.gaslimit, msg.sender, gasleft(), msg.data, tx.gasprice
         )));
 
         TokenFacetLib.state storage s1 = TokenFacetLib.getState();
 
         s1.startTimeStamp = startTimeStamp;
         s1.endTimeStamp = endTimeStamp;
+        s1.revealTimeStamp = startTimeStamp;
         s1.globalRandom = globalRandom;
+        s1.unitDuration = unitDuration;
+        s1.preRevealURI = preRevealURI;
+        s1.postRevealURI = postRevealURI;
+        s1.baseURI = baseURI;
+        
         s1.breakPoints = breakPoints;
-        s1.price = prices;
+        s1.price = price;
+        s1.day = day;
+        s1.city = city;
 
         ERC721AStorage.Layout storage s2 = ERC721AStorage.layout();
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * AdminPauseFacet authored by Sibling Labs
+ * AdminPauseFacet authored by Bling Artist Lab
  * Version 0.2.0
 /**************************************************************/
 

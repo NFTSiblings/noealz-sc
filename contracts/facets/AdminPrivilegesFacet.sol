@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * AdminPrivilegesFacet authored by Sibling Labs
+ * AdminPrivilegesFacet authored by Bling Artist Lab
  * Version 0.1.0
  * 
  * Adheres to ERC-173

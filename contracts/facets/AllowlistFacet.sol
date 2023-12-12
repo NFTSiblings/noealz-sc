@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * AllowlistLib authored by Sibling Labs
+ * AllowlistLib authored by Bling Artist Lab
  * Version 0.1.0
  * 
  * This library is designed to work in conjunction with
@@ -51,7 +51,7 @@ library AllowlistLib {
 }
 
 /**************************************************************\
- * AllowlistFacet authored by Sibling Labs
+ * AllowlistFacet authored by Bling Artist Lab
  * Version 0.1.0
 /**************************************************************/
 

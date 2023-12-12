@@ -1,6 +1,6 @@
 // Console messages are currently disabled for testing purposes.
 // They should be reenabled for deployments to testnets or mainnet!
-const allowConsoleLogging = true
+const allowConsoleLogging = false
 const diamondName = "MomentsAsia365"
 const excludeFacets = ["ExcludedFacet"]
 const excludeFunctions = {

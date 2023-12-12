@@ -8,12 +8,15 @@ const DiamondInit = "deploy"
 // List of existing facets to be added to the diamond
 // If DiamondCutFacet is not listed, it will be deployed
 const existingFacets = { // Goerli
-  DiamondCutFacet: "",
-  DiamondLoupeFacet: "",
-  AdminPauseFacet: "",
-  AdminPrivilegesFacet: "",
-  ERC165Facet: "",
-  RoyaltiesConfigFacet: "",
+  DiamondCutFacet: "0x29838A3dF88653B533c4E79f1891BAd7CDEe72aF",
+  DiamondLoupeFacet: "0x5D19C3148BA8704D1723653a188afEcD1c4EeD5e",
+  AdminPauseFacet: "0x73656E7165508285b85dBD37F8B5625428C2466e",
+  AdminPrivilegesFacet: "0xb7e873970EE2A67536E214C4677fB7Bc0E8456b9",
+  AllowlistFacet: "0xbd5784f3D062f340A152E08E93143Be18745f81D",
+  ERC165Facet: "0xD3040d1427E301796BFA03199dAb811187a7A976",
+  RoyaltiesConfigFacet: "0xc2d5f5ED8AAe1708619eb01D4002D9A01E55CF7D",
+  PaymentSplitterFacet: "0x625d8a647541e9f89F7a94d073A733C65e8dc742",
+  TokenFacet: "0x23D34A3CACcfc690257E7d0CB7C0CbE83Fe5Ae2B"
 }
 
 // Optionally deploy facets which exists in the facets folder but are not

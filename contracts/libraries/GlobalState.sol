@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /**************************************************************\
  * Global Storage Library for NFT Smart Contracts
- * Authored by Sibling Labs
+ * Authored by Bling Artist Lab
  * Version 0.2.1
  * 
  * This library is designed to provide diamond storage and

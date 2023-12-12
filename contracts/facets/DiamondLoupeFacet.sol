@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * DiamondLoupeFacet authored by Sibling Labs
+ * DiamondLoupeFacet authored by Bling Artist Lab
  * Version 0.2.0
  * 
  * Adapted from work by Nick Mudge

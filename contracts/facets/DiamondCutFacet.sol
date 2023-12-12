@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**************************************************************\
- * DiamondCutFacet authored by Sibling Labs
+ * DiamondCutFacet authored by Bling Artist Lab
  * Version 0.2.0
  * 
  * Adapted from work by Nick Mudge
