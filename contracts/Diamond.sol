@@ -32,6 +32,10 @@ contract MomentsAsia365 {
         LibDiamond.diamondCut(cut, address(0), "");        
     }
 
+    function checkNumber(uint256 a) public pure returns (uint256) {
+        return a;
+    }
+
     fallback() external payable {
         LibDiamond.DiamondStorage storage ds;
         bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
