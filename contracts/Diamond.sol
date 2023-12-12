@@ -16,7 +16,7 @@ import { GlobalState } from "./libraries/GlobalState.sol";
 import { LibDiamond } from "./libraries/LibDiamond.sol";
 import { IDiamondCut } from "./interfaces/IDiamondCut.sol";
 
-contract MomentsAsia365 {    
+contract MomentsAsia365Test {    
 
     constructor(address _diamondCutFacet) payable {        
         GlobalState.getState().owner = msg.sender;

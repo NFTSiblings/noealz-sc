@@ -1,22 +1,23 @@
-const diamondName = "MomentsAsia365"
+const diamondName = "MomentsAsia365Test"
 
 // set DiamondInit to the contract address of an existing initialiser contract,
 // or set it to "deploy" to have the script deploy it, or set it to false to
 // deploy without an intialiser contract.
-const DiamondInit = "deploy"
+const DiamondInit = "0xeAe1578315e88213B9996B5921533792dF42c432"
+const Diamond = "0xEBBF3191a2036cBa0409f47Ad65DbE5c243F5b65"
 
 // List of existing facets to be added to the diamond
 // If DiamondCutFacet is not listed, it will be deployed
-const existingFacets = { // Goerli
-  DiamondCutFacet: "0x29838A3dF88653B533c4E79f1891BAd7CDEe72aF",
-  DiamondLoupeFacet: "0x5D19C3148BA8704D1723653a188afEcD1c4EeD5e",
-  AdminPauseFacet: "0x73656E7165508285b85dBD37F8B5625428C2466e",
-  AdminPrivilegesFacet: "0xb7e873970EE2A67536E214C4677fB7Bc0E8456b9",
-  AllowlistFacet: "0xbd5784f3D062f340A152E08E93143Be18745f81D",
-  ERC165Facet: "0xD3040d1427E301796BFA03199dAb811187a7A976",
-  RoyaltiesConfigFacet: "0xc2d5f5ED8AAe1708619eb01D4002D9A01E55CF7D",
-  PaymentSplitterFacet: "0x625d8a647541e9f89F7a94d073A733C65e8dc742",
-  TokenFacet: "0x23D34A3CACcfc690257E7d0CB7C0CbE83Fe5Ae2B"
+const existingFacets = { // Mainnet
+  DiamondCutFacet: "0xc860e857c9F7621A2D6F0Fb56D356aD776Bb7299",
+  DiamondLoupeFacet: "0x86B49bb2D0318fA735197bC58AabE7D9BA239d20",
+  AdminPauseFacet: "0xaB793F8963Fb61F542e389E2ef46fF6570E1E6c9",
+  AdminPrivilegesFacet: "0x2D23DD2098DBe83ef2a6d4fADC0c06d5AFc6Db5A",
+  AllowlistFacet: "0x0e2B8e0521991165396bAAa6b3C5587d1D6d4A0f",
+  ERC165Facet: "0x02d00631CE98ed2067cF717b177757DF4a1d6C9d",
+  RoyaltiesConfigFacet: "0x74a4B77F3152673536d9C60D90daAadd6dc52fc4",
+  PaymentSplitterFacet: "0xA47AADf5ad1b437CA6f25e1453F72f034A3Efdb1",
+  TokenFacet: "0x8f656D9a5715896A797Db079b93F36C6E7C8fcF7"
 }
 
 // Optionally deploy facets which exists in the facets folder but are not
@@ -53,11 +54,15 @@ async function deployDiamond () {
     console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
   }
 
-  // deploy Diamond
-  const Diamond = await ethers.getContractFactory(diamondName)
-  const diamond = await Diamond.deploy(diamondCutFacet.address)
-  await diamond.deployed()
-  console.log('Diamond deployed:', diamond.address)
+  // // deploy Diamond
+  // const Diamond = await ethers.getContractFactory(diamondName)
+  // const diamond = await Diamond.deploy(diamondCutFacet.address)
+  // await diamond.deployed()
+  // console.log('Diamond deployed:', diamond.address)
+
+  // get existing diamond contract
+  const diamond = await ethers.getContractAt('MomentsAsia365Test', Diamond)
+  console.log('Diamond contract exists at:', diamond.address)
 
   let diamondInit
   if (ethers.utils.isAddress(DiamondInit)) {
